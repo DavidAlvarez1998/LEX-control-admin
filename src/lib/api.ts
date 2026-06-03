@@ -18,16 +18,37 @@ export class ApiError extends Error {
   }
 }
 
+const TIMEOUT_MS = 10_000;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...init?.headers,
-    },
-  });
+
+  // Timeout: sin esto, si la API no responde el fetch cuelga indefinidamente.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init?.headers,
+      },
+    });
+  } catch (err) {
+    const abortado = err instanceof DOMException && err.name === "AbortError";
+    throw new ApiError(
+      0,
+      abortado
+        ? `La API no respondió a tiempo en ${BASE_URL}. ¿Está corriendo el backend?`
+        : `No se pudo conectar con la API en ${BASE_URL}. ¿Está corriendo el backend?`,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
 
   // Sesión inválida o expirada: limpia y manda al login (salvo que ya estemos ahí).
   if (res.status === 401 && typeof window !== "undefined") {
