@@ -6,6 +6,7 @@ export type AuthUser = {
   nombre: string;
   email: string;
   rol: string;
+  esAdminEmpresa?: boolean; // true = administra su propia empresa
 };
 
 const TOKEN_KEY = "lex_admin_token";
@@ -36,4 +37,28 @@ export function clearSession(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(TOKEN_KEY);
   window.localStorage.removeItem(USER_KEY);
+}
+
+// --- Caducidad ---
+// Lee el `exp` del JWT SIN verificar la firma (solo UX para cerrar sesión de
+// forma proactiva). La autoridad real es la API, que verifica la firma y
+// responde 401 ante cualquier token vencido o manipulado.
+
+/** Devuelve el vencimiento del token en ms epoch, o null si no se puede leer. */
+export function getTokenExpiry(token: string): number | null {
+  try {
+    const payload = token.split(".")[1];
+    const json = JSON.parse(
+      atob(payload.replace(/-/g, "+").replace(/_/g, "/")),
+    );
+    return typeof json.exp === "number" ? json.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True si el token no existe, no es legible o ya venció. */
+export function isExpired(token: string): boolean {
+  const exp = getTokenExpiry(token);
+  return exp === null ? true : Date.now() >= exp;
 }

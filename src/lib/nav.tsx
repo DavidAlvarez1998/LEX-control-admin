@@ -4,6 +4,8 @@ export type NavItem = {
   href: string;
   label: string;
   icon: ReactNode;
+  // true = también visible para el rol COMERCIAL (vendedor). Si falta, es solo ADMIN.
+  comercial?: boolean;
 };
 
 const ic = "h-5 w-5 shrink-0";
@@ -12,6 +14,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     href: "/",
     label: "Dashboard",
+    comercial: true,
     icon: (
       <svg className={ic} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="9" rx="1" />
@@ -39,6 +42,27 @@ export const NAV_ITEMS: NavItem[] = [
     icon: (
       <svg className={ic} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2-2 2.7-2.7Z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/planes",
+    label: "Planes",
+    icon: (
+      <svg className={ic} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="M3 10h18M9 4v16" />
+      </svg>
+    ),
+  },
+  {
+    href: "/catalogo-procesos",
+    label: "Catálogo de procesos",
+    icon: (
+      <svg className={ic} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+        <path d="M5 3h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+        <path d="M9 13h6M9 17h6" />
       </svg>
     ),
   },
@@ -72,6 +96,28 @@ export const NAV_ITEMS: NavItem[] = [
         <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
         <path d="M16 5.2a3.2 3.2 0 0 1 0 5.6" />
         <path d="M18 20a5.5 5.5 0 0 0-3-4.9" />
+      </svg>
+    ),
+  },
+  {
+    href: "/prospectos",
+    label: "Prospectos",
+    comercial: true,
+    icon: (
+      <svg className={ic} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 5h18M3 12h18M3 19h12" />
+        <circle cx="19" cy="19" r="2" />
+      </svg>
+    ),
+  },
+  {
+    href: "/comisiones",
+    label: "Comisiones",
+    comercial: true,
+    icon: (
+      <svg className={ic} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v10M9.5 9.5a2.5 2 0 0 1 5 0c0 2.5-5 1.5-5 4a2.5 2 0 0 0 5 0" />
       </svg>
     ),
   },

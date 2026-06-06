@@ -24,7 +24,7 @@ export default function FacturacionPage() {
       ) : (
         <Card className="p-0">
           <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 text-left text-slate-500">
+            <thead className="border-b border-slate-200 dark:border-slate-800 text-left text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-5 py-3 font-medium">N.º</th>
                 <th className="px-5 py-3 font-medium">Empresa</th>
@@ -34,11 +34,11 @@ export default function FacturacionPage() {
             </thead>
             <tbody>
               {facturas.map((f) => (
-                <tr key={f.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-5 py-3 font-medium text-slate-800">{f.numero}</td>
-                  <td className="px-5 py-3 text-slate-600">{f.empresa}</td>
-                  <td className="px-5 py-3 text-slate-600">{f.total}</td>
-                  <td className="px-5 py-3 text-slate-600">{f.estado}</td>
+                <tr key={f.id} className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+                  <td className="px-5 py-3 font-medium text-slate-800 dark:text-slate-100">{f.numero}</td>
+                  <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{f.empresa}</td>
+                  <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{f.total}</td>
+                  <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{f.estado}</td>
                 </tr>
               ))}
             </tbody>

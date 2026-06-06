@@ -19,9 +19,11 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
+      // audience: "ADMIN" → la API rechaza a usuarios que no sean del panel.
       const { token, user } = await api.post<LoginResponse>("/auth/login", {
         email,
         password,
+        audience: "ADMIN",
       });
       setSession(token, user);
       router.replace("/");
@@ -37,51 +39,51 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
         <div className="mb-6 flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500 font-bold text-white">
             LX
           </div>
           <div className="leading-tight">
-            <p className="text-sm font-semibold text-slate-800">LEX Control</p>
-            <p className="text-xs text-slate-500">Administrador</p>
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">LEX Control</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Administrador</p>
           </div>
         </div>
 
-        <h1 className="text-lg font-semibold text-slate-800">Iniciar sesión</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Iniciar sesión</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Ingresa tu correo y contraseña para continuar.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <label className="block">
-            <span className="text-sm text-slate-600">Correo</span>
+            <span className="text-sm text-slate-600 dark:text-slate-300">Correo</span>
             <input
               type="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+              className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-400"
               placeholder="admin@lex.com"
             />
           </label>
 
           <label className="block">
-            <span className="text-sm text-slate-600">Contraseña</span>
+            <span className="text-sm text-slate-600 dark:text-slate-300">Contraseña</span>
             <input
               type="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+              className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-400"
               placeholder="••••••••"
             />
           </label>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
           <button
             type="submit"

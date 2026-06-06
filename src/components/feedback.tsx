@@ -78,10 +78,10 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   const notifyColor =
     dialog?.kind === "notify"
       ? dialog.opts.variant === "success"
-        ? "text-emerald-700"
+        ? "text-emerald-700 dark:text-emerald-300"
         : dialog.opts.variant === "info"
-          ? "text-slate-800"
-          : "text-red-700"
+          ? "text-slate-800 dark:text-slate-100"
+          : "text-red-700 dark:text-red-300"
       : "";
 
   return (
@@ -100,10 +100,10 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
             <Card className="w-full">
             {dialog.kind === "confirm" ? (
               <>
-                <h3 className="text-lg font-semibold text-slate-800">
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
                   {dialog.opts.title ?? "Confirmar"}
                 </h3>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   {dialog.opts.message}
                 </p>
                 <div className="mt-5 flex justify-end gap-2">
@@ -128,7 +128,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
                         ? "Información"
                         : "Error")}
                 </h3>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   {dialog.opts.message}
                 </p>
                 <div className="mt-5 flex justify-end">

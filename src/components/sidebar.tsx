@@ -25,8 +25,12 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900 text-slate-100">
-      {/* Marca */}
-      <div className="flex h-16 items-center gap-2 px-6">
+      {/* Marca → inicio */}
+      <Link
+        href="/"
+        aria-label="Ir al inicio"
+        className="flex h-16 items-center gap-2 px-6 transition-colors hover:bg-slate-800/60"
+      >
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500 font-bold text-white">
           LX
         </div>
@@ -34,11 +38,11 @@ export function Sidebar() {
           <p className="text-sm font-semibold">LEX Control</p>
           <p className="text-xs text-slate-400">Administrador</p>
         </div>
-      </div>
+      </Link>
 
-      {/* Navegación */}
+      {/* Navegación. El COMERCIAL (vendedor) solo ve los ítems marcados; el ADMIN ve todo. */}
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => user?.rol !== "COMERCIAL" || item.comercial).map((item) => {
           const active = isActive(item.href);
           return (
             <Link

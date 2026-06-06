@@ -1,9 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, EmptyState, PageHeader, PlusIcon } from "@/components/ui";
+import {
+  Button,
+  Card,
+  EmptyState,
+  MoneyInput,
+  PageHeader,
+  PlusIcon,
+} from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
 import { api, ApiError } from "@/lib/api";
+import { formatMoney } from "@/lib/format";
 
 type Empresa = {
   id: string;
@@ -13,9 +21,33 @@ type Empresa = {
   telefono: string | null;
   activo: boolean;
   _count: { usuarios: number; servicios: number };
+  // Vista previa de servicios asignados (solo nombre; total en _count.servicios).
+  // Opcional: la API podría no incluirlo si todavía no recargó el nuevo `include`.
+  servicios?: { servicio: { nombre: string } }[];
   createdAt: string;
   updatedAt: string;
 };
+
+// Servicio del catálogo (los decimales llegan como string desde la API).
+type CatalogoServicio = {
+  id: string;
+  nombre: string;
+  precioBase: string;
+  precioPorUnidad: string;
+  unidad: string | null;
+  incluidos: number;
+  activo: boolean;
+};
+
+// Asignación existente al cargar una empresa para editar.
+type EmpresaServicio = {
+  servicioId: string;
+  precioBase: string;
+  precioPorUnidad: string;
+  incluidos: number;
+};
+
+type EmpresaDetalle = Empresa & { servicios: EmpresaServicio[] };
 
 type FormState = {
   nombre: string;
@@ -23,6 +55,14 @@ type FormState = {
   email: string;
   telefono: string;
   activo: boolean;
+};
+
+// Estado editable de un servicio dentro del formulario.
+type AsignacionForm = {
+  seleccionado: boolean;
+  precioBase: string;
+  precioPorUnidad: string;
+  incluidos: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -33,25 +73,39 @@ const EMPTY_FORM: FormState = {
   activo: true,
 };
 
+// Precio mostrado: "$1.000.000" (separador de miles con punto).
+const money = (v: string | number) => `$${formatMoney(v)}`;
+
 export default function EmpresasPage() {
   const confirm = useConfirm();
   const notify = useNotify();
 
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [catalogo, setCatalogo] = useState<CatalogoServicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  // Asignaciones del formulario, indexadas por servicioId.
+  const [asignaciones, setAsignaciones] = useState<
+    Record<string, AsignacionForm>
+  >({});
   const [saving, setSaving] = useState(false);
+  const [cargandoForm, setCargandoForm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   async function cargar() {
     setLoading(true);
     setError(null);
     try {
-      setEmpresas(await api.get<Empresa[]>("/empresas"));
+      const [emp, cat] = await Promise.all([
+        api.get<Empresa[]>("/empresas"),
+        api.get<CatalogoServicio[]>("/servicios"),
+      ]);
+      setEmpresas(emp);
+      setCatalogo(cat);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar");
     } finally {
@@ -63,14 +117,30 @@ export default function EmpresasPage() {
     cargar();
   }, []);
 
+  // Asignaciones por defecto: todos los servicios sin seleccionar, con los
+  // precios de referencia del catálogo precargados.
+  function asignacionesPorDefecto(): Record<string, AsignacionForm> {
+    const base: Record<string, AsignacionForm> = {};
+    for (const s of catalogo) {
+      base[s.id] = {
+        seleccionado: false,
+        precioBase: String(Math.round(Number(s.precioBase))),
+        precioPorUnidad: String(Math.round(Number(s.precioPorUnidad))),
+        incluidos: String(s.incluidos),
+      };
+    }
+    return base;
+  }
+
   function abrirCrear() {
     setEditId(null);
     setForm(EMPTY_FORM);
+    setAsignaciones(asignacionesPorDefecto());
     setFormError(null);
     setFormOpen(true);
   }
 
-  function abrirEditar(e: Empresa) {
+  async function abrirEditar(e: Empresa) {
     setEditId(e.id);
     setForm({
       nombre: e.nombre,
@@ -80,18 +150,74 @@ export default function EmpresasPage() {
       activo: e.activo,
     });
     setFormError(null);
+    // Parte de los valores por defecto y superpone las asignaciones existentes.
+    const base = asignacionesPorDefecto();
+    setAsignaciones(base);
     setFormOpen(true);
+    setCargandoForm(true);
+    try {
+      const detalle = await api.get<EmpresaDetalle>(`/empresas/${e.id}`);
+      const merged = { ...base };
+      for (const a of detalle.servicios) {
+        merged[a.servicioId] = {
+          seleccionado: true,
+          precioBase: String(Math.round(Number(a.precioBase))),
+          precioPorUnidad: String(Math.round(Number(a.precioPorUnidad))),
+          incluidos: String(a.incluidos),
+        };
+      }
+      setAsignaciones(merged);
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "No se pudieron cargar los servicios",
+      );
+    } finally {
+      setCargandoForm(false);
+    }
+  }
+
+  function setAsignacion(id: string, patch: Partial<AsignacionForm>) {
+    setAsignaciones((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }
 
   async function guardar() {
-    setSaving(true);
     setFormError(null);
+    if (!form.nombre.trim()) {
+      setFormError("Completa los campos obligatorios: Nombre");
+      return;
+    }
+    // Desactivar una empresa que estaba activa bloquea a TODOS sus usuarios.
+    if (editId) {
+      const original = empresas.find((x) => x.id === editId);
+      if (original?.activo && !form.activo) {
+        const ok = await confirm({
+          title: "Desactivar empresa",
+          message: `Al desactivar "${form.nombre.trim()}", todos sus usuarios quedarán bloqueados: no podrán iniciar sesión y sus sesiones activas dejarán de funcionar. ¿Continuar?`,
+          confirmText: "Desactivar",
+          danger: true,
+        });
+        if (!ok) return;
+      }
+    }
+    setSaving(true);
+    const servicios = catalogo
+      .filter((s) => asignaciones[s.id]?.seleccionado)
+      .map((s) => {
+        const a = asignaciones[s.id];
+        return {
+          servicioId: s.id,
+          precioBase: Number(a.precioBase || 0),
+          precioPorUnidad: Number(a.precioPorUnidad || 0),
+          incluidos: Number(a.incluidos || 0),
+        };
+      });
     const payload = {
       nombre: form.nombre,
       rfc: form.rfc.trim() || null,
       email: form.email.trim() || null,
       telefono: form.telefono.trim() || null,
       activo: form.activo,
+      servicios,
     };
     try {
       if (editId) {
@@ -114,17 +240,21 @@ export default function EmpresasPage() {
     }
   }
 
-  async function eliminar(e: Empresa) {
+  // Borrado permanente de la empresa que se está editando (desde el modal).
+  async function eliminarEmpresaActual() {
+    if (!editId) return;
     const ok = await confirm({
       title: "Eliminar empresa",
-      message: `¿Eliminar "${e.nombre}"? Se borrarán también sus usuarios y servicios asignados.`,
+      message: `¿Eliminar "${form.nombre}"? Se borrarán también sus usuarios y servicios asignados. Esta acción no se puede deshacer.`,
       confirmText: "Eliminar",
       danger: true,
     });
     if (!ok) return;
     try {
-      await api.del(`/empresas/${e.id}`);
+      await api.del(`/empresas/${editId}`);
+      setFormOpen(false);
       await cargar();
+      await notify({ message: "Empresa eliminada.", variant: "success" });
     } catch (err) {
       await notify({
         message: err instanceof Error ? err.message : "Error al eliminar",
@@ -132,6 +262,10 @@ export default function EmpresasPage() {
       });
     }
   }
+
+  const seleccionados = catalogo.filter(
+    (s) => asignaciones[s.id]?.seleccionado,
+  ).length;
 
   return (
     <div>
@@ -147,7 +281,7 @@ export default function EmpresasPage() {
       />
 
       {error && (
-        <Card className="mb-4 border-red-200 bg-red-50 text-sm text-red-700">
+        <Card className="mb-4 border-red-200 bg-red-50 dark:bg-red-950/40 text-sm text-red-700 dark:text-red-300">
           {error}{" "}
           <button onClick={cargar} className="font-medium underline">
             reintentar
@@ -156,7 +290,7 @@ export default function EmpresasPage() {
       )}
 
       {loading ? (
-        <Card className="text-sm text-slate-500">Cargando…</Card>
+        <Card className="text-sm text-slate-500 dark:text-slate-400">Cargando…</Card>
       ) : empresas.length === 0 ? (
         <EmptyState
           title="Sin empresas todavía"
@@ -169,107 +303,122 @@ export default function EmpresasPage() {
           }
         />
       ) : (
-        <Card className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 text-left text-slate-500">
-              <tr>
-                <th className="px-5 py-3 font-medium">Empresa</th>
-                <th className="px-5 py-3 font-medium">RFC / NIT</th>
-                <th className="px-5 py-3 font-medium">Usuarios</th>
-                <th className="px-5 py-3 font-medium">Servicios</th>
-                <th className="px-5 py-3 font-medium">Estado</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {empresas.map((e) => (
-                <tr key={e.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-5 py-3">
-                    <div className="font-medium text-slate-800">{e.nombre}</div>
-                    {e.email && (
-                      <div className="text-xs text-slate-500">{e.email}</div>
-                    )}
-                  </td>
-                  <td className="px-5 py-3 text-slate-600">{e.rfc ?? "—"}</td>
-                  <td className="px-5 py-3 text-slate-600">{e._count.usuarios}</td>
-                  <td className="px-5 py-3 text-slate-600">{e._count.servicios}</td>
-                  <td className="px-5 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        e.activo
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {e.activo ? "Activa" : "Inactiva"}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <button
-                      onClick={() => abrirEditar(e)}
-                      className="font-medium text-indigo-600 hover:text-indigo-500"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => eliminar(e)}
-                      className="ml-4 font-medium text-red-600 hover:text-red-500"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+        <div className="space-y-4">
+          {empresas.map((e) => (
+            <Card key={e.id} className="p-0">
+              <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4">
+                <div className="min-w-0">
+                  <div className="font-medium text-slate-800 dark:text-slate-100">{e.nombre}</div>
+                  {e.email && (
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{e.email}</div>
+                  )}
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-slate-400 dark:text-slate-500">RFC / NIT:</span>{" "}
+                    {e.rfc ?? "—"}
+                    <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
+                    {e._count.usuarios} usuario{e._count.usuarios === 1 ? "" : "s"}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      e.activo
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                    }`}
+                  >
+                    {e.activo ? "Activa" : "Inactiva"}
+                  </span>
+                  <button
+                    onClick={() => abrirEditar(e)}
+                    className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
+                  >
+                    Editar
+                  </button>
+                </div>
+              </div>
+
+              {/* Servicios asignados de la empresa. */}
+              <div className="px-5 pb-4 pt-3">
+                <div className="border-t border-dashed border-slate-200 dark:border-slate-800 pt-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    Servicios
+                  </p>
+                  {(e.servicios ?? []).length === 0 ? (
+                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                      Sin servicios asignados
+                    </p>
+                  ) : (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {(e.servicios ?? []).map((s, i) => (
+                        <span
+                          key={i}
+                          className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300"
+                        >
+                          {s.servicio.nombre}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
 
       {formOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <Card className="w-full max-w-md">
-            <h3 className="mb-4 text-lg font-semibold text-slate-800">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 dark:bg-black/60"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !saving) setFormOpen(false);
+          }}
+        >
+          <Card className="flex max-h-[90vh] w-full max-w-2xl flex-col">
+            <h3 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">
               {editId ? "Editar empresa" : "Nueva empresa"}
             </h3>
 
-            <div className="space-y-3">
+            <div className="-mr-1 flex-1 space-y-3 overflow-y-auto pr-1">
               <label className="block">
-                <span className="text-sm text-slate-600">Nombre</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">
+                  Nombre <span className="text-red-500">*</span>
+                </span>
                 <input
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="Ej. Bufete García & Asociados"
                 />
               </label>
 
               <label className="block">
-                <span className="text-sm text-slate-600">RFC / NIT</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">RFC / NIT</span>
                 <input
                   value={form.rfc}
                   onChange={(e) => setForm({ ...form, rfc: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="Identificador fiscal"
                 />
               </label>
 
               <label className="block">
-                <span className="text-sm text-slate-600">Correo</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">Correo</span>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="contacto@empresa.com"
                 />
               </label>
 
               <label className="block">
-                <span className="text-sm text-slate-600">Teléfono</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">Teléfono</span>
                 <input
                   value={form.telefono}
                   onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="300 123 4567"
                 />
               </label>
@@ -280,19 +429,149 @@ export default function EmpresasPage() {
                   checked={form.activo}
                   onChange={(e) => setForm({ ...form, activo: e.target.checked })}
                 />
-                <span className="text-sm text-slate-600">Activa</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">Activa</span>
               </label>
+              {!form.activo && (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Con la empresa inactiva, ninguno de sus usuarios podrá iniciar
+                  sesión.
+                </p>
+              )}
+
+              {/* Servicios contratados */}
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Servicios contratados
+                  </span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    {seleccionados} seleccionado{seleccionados === 1 ? "" : "s"}
+                  </span>
+                </div>
+                <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                  Los precios se precargan del catálogo y puedes ajustarlos para
+                  esta empresa.
+                </p>
+
+                {cargandoForm ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Cargando servicios…</p>
+                ) : catalogo.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    No hay servicios en el catálogo todavía.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {catalogo.map((s) => {
+                      const a = asignaciones[s.id];
+                      if (!a) return null;
+                      return (
+                        <div
+                          key={s.id}
+                          className={`rounded-lg border p-3 ${
+                            a.seleccionado
+                              ? "border-indigo-200 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-950/40"
+                              : "border-slate-200 dark:border-slate-800"
+                          }`}
+                        >
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={a.seleccionado}
+                              onChange={(e) =>
+                                setAsignacion(s.id, {
+                                  seleccionado: e.target.checked,
+                                })
+                              }
+                            />
+                            <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                              {s.nombre}
+                            </span>
+                            <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+                              ref. {money(s.precioBase)}
+                              {s.unidad && ` + ${money(s.precioPorUnidad)}/${s.unidad}`}
+                            </span>
+                          </label>
+
+                          {a.seleccionado && (
+                            <div className="mt-3 grid grid-cols-1 gap-3 pl-6 sm:grid-cols-3">
+                              <label className="block">
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                  Precio base
+                                </span>
+                                <MoneyInput
+                                  value={a.precioBase}
+                                  onChange={(precioBase) =>
+                                    setAsignacion(s.id, { precioBase })
+                                  }
+                                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
+                                />
+                              </label>
+                              {s.unidad && (
+                                <>
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                      Precio / {s.unidad}
+                                    </span>
+                                    <MoneyInput
+                                      value={a.precioPorUnidad}
+                                      onChange={(precioPorUnidad) =>
+                                        setAsignacion(s.id, { precioPorUnidad })
+                                      }
+                                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
+                                    />
+                                  </label>
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                      Incluidos
+                                    </span>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="1"
+                                      value={a.incluidos}
+                                      onChange={(e) =>
+                                        setAsignacion(s.id, {
+                                          incluidos: e.target.value,
+                                        })
+                                      }
+                                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
+                                    />
+                                  </label>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {formError && <p className="mt-3 text-sm text-red-600">{formError}</p>}
+            {formError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
-            <div className="mt-5 flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setFormOpen(false)} disabled={saving}>
-                Cancelar
-              </Button>
-              <Button onClick={guardar} disabled={saving}>
-                {saving ? "Guardando…" : "Guardar"}
-              </Button>
+            <div className="mt-5 flex items-center justify-between gap-2">
+              <div>
+                {editId && (
+                  <button
+                    type="button"
+                    onClick={eliminarEmpresaActual}
+                    disabled={saving}
+                    className="rounded-lg border border-red-200 dark:border-red-900/60 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-50"
+                  >
+                    Eliminar empresa
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setFormOpen(false)} disabled={saving}>
+                  Cancelar
+                </Button>
+                <Button onClick={guardar} disabled={saving || cargandoForm}>
+                  {saving ? "Guardando…" : "Guardar"}
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
