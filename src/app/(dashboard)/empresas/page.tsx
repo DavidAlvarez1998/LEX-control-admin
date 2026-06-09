@@ -49,6 +49,11 @@ type EmpresaServicio = {
 
 type EmpresaDetalle = Empresa & { servicios: EmpresaServicio[] };
 
+// Plan del catálogo (para asignar/cambiar el plan de una empresa).
+type PlanItem = { id: string; clave: string; nombre: string; activo: boolean };
+// Suscripción tal como la lista GET /planes/suscripciones (por empresa).
+type SuscripcionItem = { id: string; plan: string | null; planClave: string | null };
+
 type FormState = {
   nombre: string;
   rfc: string;
@@ -82,6 +87,10 @@ export default function EmpresasPage() {
 
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [catalogo, setCatalogo] = useState<CatalogoServicio[]>([]);
+  // Planes disponibles + plan actual por empresa, para editar el plan en la lista.
+  const [planes, setPlanes] = useState<PlanItem[]>([]);
+  const [planPorEmpresa, setPlanPorEmpresa] = useState<Record<string, { nombre: string | null; clave: string | null }>>({});
+  const [cambiandoPlan, setCambiandoPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,12 +109,18 @@ export default function EmpresasPage() {
     setLoading(true);
     setError(null);
     try {
-      const [emp, cat] = await Promise.all([
+      const [emp, cat, pls, subs] = await Promise.all([
         api.get<Empresa[]>("/empresas"),
         api.get<CatalogoServicio[]>("/servicios"),
+        api.get<PlanItem[]>("/planes"),
+        api.get<SuscripcionItem[]>("/planes/suscripciones"),
       ]);
       setEmpresas(emp);
       setCatalogo(cat);
+      setPlanes(pls);
+      setPlanPorEmpresa(
+        Object.fromEntries(subs.map((s) => [s.id, { nombre: s.plan, clave: s.planClave }])),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar");
     } finally {
@@ -116,6 +131,25 @@ export default function EmpresasPage() {
   useEffect(() => {
     cargar();
   }, []);
+
+  // Asigna/cambia el plan de una empresa (PUT /planes/suscripciones/:empresaId).
+  async function cambiarPlan(empresaId: string, clave: string) {
+    const plan = planes.find((p) => p.clave === clave);
+    if (!plan) return;
+    setCambiandoPlan(empresaId);
+    try {
+      await api.put(`/planes/suscripciones/${empresaId}`, { planId: plan.id });
+      setPlanPorEmpresa((m) => ({ ...m, [empresaId]: { nombre: plan.nombre, clave: plan.clave } }));
+      await notify({ message: `Plan actualizado a "${plan.nombre}".`, variant: "success" });
+    } catch (err) {
+      await notify({
+        message: err instanceof ApiError ? err.message : "No se pudo cambiar el plan.",
+        variant: "error",
+      });
+    } finally {
+      setCambiandoPlan(null);
+    }
+  }
 
   // Asignaciones por defecto: todos los servicios sin seleccionar, con los
   // precios de referencia del catálogo precargados.
@@ -338,8 +372,36 @@ export default function EmpresasPage() {
                 </div>
               </div>
 
-              {/* Servicios asignados de la empresa. */}
-              <div className="px-5 pb-4 pt-3">
+              {/* Plan + servicios asignados de la empresa. */}
+              <div className="px-5 pb-4 pt-3 space-y-3">
+                <div className="border-t border-dashed border-slate-200 dark:border-slate-800 pt-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    Plan
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <select
+                      value={planPorEmpresa[e.id]?.clave ?? ""}
+                      disabled={cambiandoPlan === e.id}
+                      onChange={(ev) => cambiarPlan(e.id, ev.target.value)}
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-indigo-400 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                    >
+                      <option value="" disabled>
+                        Sin plan — selecciona…
+                      </option>
+                      {planes
+                        .filter((p) => p.activo)
+                        .map((p) => (
+                          <option key={p.id} value={p.clave}>
+                            {p.nombre}
+                          </option>
+                        ))}
+                    </select>
+                    {cambiandoPlan === e.id && (
+                      <span className="text-xs text-slate-400">Guardando…</span>
+                    )}
+                  </div>
+                </div>
+
                 <div className="border-t border-dashed border-slate-200 dark:border-slate-800 pt-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                     Servicios
