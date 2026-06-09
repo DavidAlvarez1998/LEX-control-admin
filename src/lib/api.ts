@@ -79,3 +79,47 @@ export const api = {
     request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };
+
+/**
+ * Sube un archivo (multipart/form-data) a la API. NO fija Content-Type: el
+ * navegador pone el boundary. Reusa el token y el manejo de 401. Timeout amplio
+ * (60s) porque un archivo tarda más que una request normal.
+ */
+export async function uploadFile<T>(path: string, form: FormData): Promise<T> {
+  const token = getToken();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60_000);
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method: "POST",
+      body: form,
+      signal: controller.signal,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+  } catch (err) {
+    const abortado = err instanceof DOMException && err.name === "AbortError";
+    throw new ApiError(
+      0,
+      abortado
+        ? "La subida tardó demasiado. Intenta de nuevo."
+        : `No se pudo conectar con la API en ${BASE_URL}. ¿Está corriendo el backend?`,
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (res.status === 401 && typeof window !== "undefined") {
+    clearSession();
+    if (!window.location.pathname.startsWith("/login")) {
+      window.location.href = "/login";
+    }
+  }
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new ApiError(res.status, data?.error?.message ?? `Error ${res.status}`, data?.error?.issues);
+  }
+  return data as T;
+}

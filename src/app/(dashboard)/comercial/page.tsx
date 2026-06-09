@@ -1,18 +1,19 @@
 "use client";
 
-// Comercial — única entrada del sidebar que agrupa todo el módulo de ventas en
-// pestañas: Prospectos, Equipo (solo ADMIN), Agenda y Comisiones. El COMERCIAL
-// ve todas menos Equipo. El tab inicial puede venir por ?tab= (links viejos).
+// Comercial — sección de ventas en pestañas: Prospectos, Equipo (solo ADMIN) y
+// Comisiones. La Agenda vive en su propia entrada del sidebar (/agenda). El
+// COMERCIAL ve todas menos Equipo. El tab inicial puede venir por ?tab=; al venir
+// desde /agenda con ?comercial=, abre ese comercial en la pestaña Equipo.
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getUser } from "@/lib/auth";
 import { ProspectosList } from "@/components/prospectos-list";
 import { EquipoComercial } from "@/components/equipo-comercial";
-import { AgendaView } from "@/components/agenda-view";
 import { ComisionesView } from "@/components/comisiones-view";
+import { ContratosComercial } from "@/components/contratos-comercial";
 
-type Tab = "prospectos" | "equipo" | "agenda" | "comisiones";
+type Tab = "prospectos" | "equipo" | "comisiones" | "contratos";
 
 export default function ComercialPage() {
   return (
@@ -29,16 +30,22 @@ function ComercialTabs() {
   const tabs: { id: Tab; label: string }[] = [
     { id: "prospectos", label: "Prospectos" },
     ...(esAdmin ? [{ id: "equipo" as Tab, label: "Equipo comercial" }] : []),
-    { id: "agenda", label: "Agenda" },
     { id: "comisiones", label: "Comisiones" },
+    ...(esAdmin ? [{ id: "contratos" as Tab, label: "Contratos" }] : []),
   ];
 
+  // Comercial a abrir en Equipo cuando se llega desde /agenda (?comercial=).
+  const comercialFromUrl = esAdmin ? sp.get("comercial") : null;
   const fromUrl = sp.get("tab") as Tab | null;
-  const initial = tabs.some((t) => t.id === fromUrl) ? (fromUrl as Tab) : "prospectos";
+  const initial = comercialFromUrl
+    ? "equipo"
+    : tabs.some((t) => t.id === fromUrl)
+      ? (fromUrl as Tab)
+      : "prospectos";
   const [tab, setTab] = useState<Tab>(initial);
   // Comercial a abrir en la pestaña Equipo (al navegar desde Agenda o Prospectos).
-  const [openComercialId, setOpenComercialId] = useState<string | null>(null);
-  const [returnTab, setReturnTab] = useState<Tab>("agenda"); // a dónde vuelve "Atrás"
+  const [openComercialId, setOpenComercialId] = useState<string | null>(comercialFromUrl);
+  const [returnTab, setReturnTab] = useState<Tab>("prospectos"); // a dónde vuelve "Atrás"
 
   const selectTab = (t: Tab) => { setOpenComercialId(null); setTab(t); };
   // Abrir un comercial en Equipo recordando desde qué pestaña se vino.
@@ -63,8 +70,8 @@ function ComercialTabs() {
       {tab === "equipo" && esAdmin && (
         <EquipoComercial openComercialId={openComercialId} onForcedBack={forcedBack} />
       )}
-      {tab === "agenda" && <AgendaView onOpenComercial={openComercial} />}
       {tab === "comisiones" && <ComisionesView />}
+      {tab === "contratos" && esAdmin && <ContratosComercial />}
     </div>
   );
 }
