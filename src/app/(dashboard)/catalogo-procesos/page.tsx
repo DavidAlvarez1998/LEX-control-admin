@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, EmptyState, PageHeader, PlusIcon } from "@/components/ui";
+import { Button, Card, PageHeader, PlusIcon } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
 import { AreasManager } from "@/components/areas-manager";
 import { api, ApiError } from "@/lib/api";
@@ -123,11 +123,11 @@ export default function CatalogoProcesosPage() {
     cargar();
   }, []);
 
-  function abrirCrear(area?: Area) {
+  function abrirCrear(area?: Area, jur?: Jurisdiccion) {
     setEditId(null);
     setNombre("");
     setDescripcion("");
-    setJurisdiccion(area?.jurisdiccion ?? "ORDINARIA_CIVIL");
+    setJurisdiccion(jur ?? area?.jurisdiccion ?? "ORDINARIA_CIVIL");
     setAreaSlugs(area ? [area.slug] : []);
     setCampos([{ key: "", label: "", tipo: "texto", requerido: true, opciones: "" }]);
     setEtapas([{ nombre: "", terminal: false, plazoDias: "", camposRequeridos: [] }]);
@@ -319,14 +319,12 @@ export default function CatalogoProcesosPage() {
   const setEtapa = (i: number, patch: Partial<EtapaRow>) =>
     setEtapas((es) => es.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
 
-  // --- Agrupación por área de práctica (un tipo aparece bajo CADA área que lo incluye) ---
-  const jurLabel = (j: Jurisdiccion) => JURISDICCIONES.find((x) => x.v === j)?.label ?? j;
-  const tiposPorArea = (slug: string) => tipos.filter((t) => t.areaSlugs.includes(slug));
-  const huerfanos = tipos.filter((t) => t.areaSlugs.length === 0);
-  const toggleArea = (slug: string) =>
+  // --- Agrupación por JURISDICCIÓN (6 fijas; cada tipo cae en exactamente una) ---
+  const tiposPorJurisdiccion = (j: Jurisdiccion) => tipos.filter((t) => t.jurisdiccion === j);
+  const toggleJur = (j: string) =>
     setColapsadas((s) => {
       const next = new Set(s);
-      if (next.has(slug)) next.delete(slug); else next.add(slug);
+      if (next.has(j)) next.delete(j); else next.add(j);
       return next;
     });
 
@@ -337,7 +335,7 @@ export default function CatalogoProcesosPage() {
         <div className="font-medium text-slate-800 dark:text-slate-100">{t.nombre}</div>
         {t.descripcion && <div className="text-xs text-slate-500 dark:text-slate-400">{t.descripcion}</div>}
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {t.areaSlugs.length > 1 && t.areaSlugs.map((s) => (
+          {t.areaSlugs.map((s) => (
             <span key={s} className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300">
               {areas.find((a) => a.slug === s)?.nombre ?? s}
             </span>
@@ -378,31 +376,25 @@ export default function CatalogoProcesosPage() {
 
       {loading ? (
         <Card className="text-sm text-slate-500 dark:text-slate-400">Cargando…</Card>
-      ) : areas.length === 0 ? (
-        <EmptyState
-          title="Sin áreas de práctica"
-          description="No hay áreas de práctica configuradas para agrupar el catálogo."
-        />
       ) : (
         <div className="space-y-4">
-          {areas.map((a) => {
-            const lista = tiposPorArea(a.slug);
-            const abierta = !colapsadas.has(a.slug);
+          {JURISDICCIONES.map((j) => {
+            const lista = tiposPorJurisdiccion(j.v);
+            const abierta = !colapsadas.has(j.v);
             return (
-              <div key={a.id} className="rounded-xl border border-slate-200 dark:border-slate-800">
+              <div key={j.v} className="rounded-xl border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center justify-between gap-3 px-4 py-3">
                   <button
-                    onClick={() => toggleArea(a.slug)}
+                    onClick={() => toggleJur(j.v)}
                     className="flex min-w-0 items-center gap-2 text-left"
                   >
                     <svg className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${abierta ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 6 15 12 9 18" />
                     </svg>
-                    <span className="truncate font-medium text-slate-800 dark:text-slate-100">{a.nombre}</span>
-                    <span className="hidden text-xs text-slate-400 sm:inline">· {jurLabel(a.jurisdiccion)}</span>
+                    <span className="truncate font-medium text-slate-800 dark:text-slate-100">{j.label}</span>
                     <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">{lista.length}</span>
                   </button>
-                  <button onClick={() => abrirCrear(a)} className="flex shrink-0 items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">
+                  <button onClick={() => abrirCrear(undefined, j.v)} className="flex shrink-0 items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">
                     <PlusIcon /> Crear tipo
                   </button>
                 </div>
@@ -410,7 +402,7 @@ export default function CatalogoProcesosPage() {
                   <div className="space-y-2 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
                     {lista.length === 0 ? (
                       <p className="text-sm text-slate-400">
-                        Sin tipos en esta área. <button onClick={() => abrirCrear(a)} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Crear el primero</button>.
+                        Sin tipos en esta jurisdicción. <button onClick={() => abrirCrear(undefined, j.v)} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Crear el primero</button>.
                       </p>
                     ) : (
                       lista.map(renderTipo)
@@ -420,15 +412,6 @@ export default function CatalogoProcesosPage() {
               </div>
             );
           })}
-
-          {huerfanos.length > 0 && (
-            <div className="rounded-xl border border-amber-200 dark:border-amber-900/50">
-              <div className="px-4 py-3 font-medium text-amber-700 dark:text-amber-400">Sin área asignada ({huerfanos.length})</div>
-              <div className="space-y-2 border-t border-amber-100 px-4 py-3 dark:border-amber-900/40">
-                {huerfanos.map(renderTipo)}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
