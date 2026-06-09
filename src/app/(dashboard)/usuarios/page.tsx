@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button, Card, EmptyState, PageHeader, PlusIcon } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
 import { api, ApiError } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 
 type Estado = "ACTIVO" | "PENDIENTE" | "INACTIVO";
 
@@ -62,6 +63,8 @@ export default function UsuariosPage() {
   const confirm = useConfirm();
   const notify = useNotify();
 
+  // Id del admin con sesión activa: no puede editarse a sí mismo (solo lectura).
+  const [miId, setMiId] = useState<string | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [empresas, setEmpresas] = useState<EmpresaOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +97,7 @@ export default function UsuariosPage() {
   }
 
   useEffect(() => {
+    setMiId(getUser()?.id ?? null);
     cargar();
   }, []);
 
@@ -300,12 +304,16 @@ export default function UsuariosPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3 text-right whitespace-nowrap">
-                    <button
-                      onClick={() => abrirEditar(u)}
-                      className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
-                    >
-                      Editar
-                    </button>
+                    {u.id === miId ? (
+                      <span className="text-xs text-slate-400 dark:text-slate-500">Tú</span>
+                    ) : (
+                      <button
+                        onClick={() => abrirEditar(u)}
+                        className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
+                      >
+                        Editar
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
