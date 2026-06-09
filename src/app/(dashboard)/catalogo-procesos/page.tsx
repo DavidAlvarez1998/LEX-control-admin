@@ -39,6 +39,8 @@ type Tipo = {
   areaSlugs: string[];
 };
 
+type Plantilla = { id: string; nombre: string; contenido: string };
+
 // --- Estado editable del formulario ---
 type CampoRow = { key: string; label: string; tipo: CampoTipo; requerido: boolean; opciones: string };
 type EtapaRow = { nombre: string; terminal: boolean; plazoDias: string; camposRequeridos: string[] }; // por label
@@ -83,6 +85,16 @@ export default function CatalogoProcesosPage() {
   const [etapas, setEtapas] = useState<EtapaRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // --- Plantillas de documento del tipo seleccionado ---
+  const [plantillaTipo, setPlantillaTipo] = useState<Tipo | null>(null);
+  const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
+  const [plLoading, setPlLoading] = useState(false);
+  const [plEditId, setPlEditId] = useState<string | null>(null);
+  const [plNombre, setPlNombre] = useState("");
+  const [plContenido, setPlContenido] = useState("");
+  const [plSaving, setPlSaving] = useState(false);
+  const [plError, setPlError] = useState<string | null>(null);
 
   async function cargar() {
     setLoading(true);
@@ -225,6 +237,75 @@ export default function CatalogoProcesosPage() {
     }
   }
 
+  // --- Plantillas ---
+  async function abrirPlantillas(t: Tipo) {
+    setPlantillaTipo(t);
+    setPlEditId(null);
+    setPlNombre("");
+    setPlContenido("");
+    setPlError(null);
+    setPlLoading(true);
+    try {
+      setPlantillas(await api.get<Plantilla[]>(`/catalogo/tipos-proceso/${t.id}/plantillas`));
+    } catch {
+      setPlantillas([]);
+    } finally {
+      setPlLoading(false);
+    }
+  }
+
+  function editarPlantilla(p: Plantilla) {
+    setPlEditId(p.id);
+    setPlNombre(p.nombre);
+    setPlContenido(p.contenido);
+    setPlError(null);
+  }
+
+  function nuevaPlantilla() {
+    setPlEditId(null);
+    setPlNombre("");
+    setPlContenido("");
+    setPlError(null);
+  }
+
+  async function guardarPlantilla() {
+    if (!plantillaTipo) return;
+    if (!plNombre.trim()) return setPlError("El nombre es obligatorio.");
+    if (!plContenido.trim()) return setPlError("El contenido es obligatorio.");
+    setPlSaving(true);
+    setPlError(null);
+    try {
+      if (plEditId) {
+        await api.patch(`/catalogo/plantillas/${plEditId}`, { nombre: plNombre.trim(), contenido: plContenido });
+      } else {
+        await api.post(`/catalogo/tipos-proceso/${plantillaTipo.id}/plantillas`, { nombre: plNombre.trim(), contenido: plContenido });
+      }
+      setPlantillas(await api.get<Plantilla[]>(`/catalogo/tipos-proceso/${plantillaTipo.id}/plantillas`));
+      nuevaPlantilla();
+    } catch (err) {
+      setPlError(err instanceof Error ? err.message : "Error al guardar la plantilla");
+    } finally {
+      setPlSaving(false);
+    }
+  }
+
+  async function eliminarPlantilla(p: Plantilla) {
+    const ok = await confirm({
+      title: "Eliminar plantilla",
+      message: `¿Eliminar la plantilla "${p.nombre}"? Los documentos ya generados se conservan.`,
+      confirmText: "Eliminar",
+      danger: true,
+    });
+    if (!ok || !plantillaTipo) return;
+    try {
+      await api.del(`/catalogo/plantillas/${p.id}`);
+      setPlantillas((ps) => ps.filter((x) => x.id !== p.id));
+      if (plEditId === p.id) nuevaPlantilla();
+    } catch (err) {
+      await notify({ message: err instanceof Error ? err.message : "Error al eliminar", variant: "error" });
+    }
+  }
+
   // Helpers de filas
   const setCampo = (i: number, patch: Partial<CampoRow>) =>
     setCampos((cs) => cs.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
@@ -276,6 +357,7 @@ export default function CatalogoProcesosPage() {
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-3">
+                <button onClick={() => abrirPlantillas(t)} className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-500">Plantillas</button>
                 <button onClick={() => abrirEditar(t)} className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">Editar</button>
                 <button onClick={() => eliminar(t)} className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-500">Eliminar</button>
               </div>
@@ -428,6 +510,85 @@ export default function CatalogoProcesosPage() {
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setFormOpen(false)} disabled={saving}>Cancelar</Button>
               <Button onClick={guardar} disabled={saving}>{saving ? "Guardando…" : "Guardar"}</Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {plantillaTipo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 dark:bg-black/60"
+          onClick={(e) => { if (e.target === e.currentTarget && !plSaving) setPlantillaTipo(null); }}
+        >
+          <Card className="flex max-h-[90vh] w-full max-w-3xl flex-col">
+            <h3 className="mb-1 text-lg font-semibold text-slate-800 dark:text-slate-100">
+              Plantillas de documento
+            </h3>
+            <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">{plantillaTipo.nombre}</p>
+
+            <div className="-mr-1 flex-1 space-y-4 overflow-y-auto pr-1">
+              {/* Lista de plantillas */}
+              {plLoading ? (
+                <p className="text-sm text-slate-500">Cargando…</p>
+              ) : plantillas.length === 0 ? (
+                <p className="text-sm text-slate-400">Aún no hay plantillas para este tipo.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {plantillas.map((p) => (
+                    <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
+                      <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{p.nombre}</span>
+                      <span className="flex shrink-0 gap-3">
+                        <button onClick={() => editarPlantilla(p)} className="text-xs font-medium text-indigo-600 hover:underline">Editar</button>
+                        <button onClick={() => eliminarPlantilla(p)} className="text-xs font-medium text-red-600 hover:underline">Eliminar</button>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Editor */}
+              <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    {plEditId ? "Editar plantilla" : "Nueva plantilla"}
+                  </span>
+                  {plEditId && (
+                    <button onClick={nuevaPlantilla} className="text-xs font-medium text-indigo-600 hover:underline">+ Nueva</button>
+                  )}
+                </div>
+                <label className="block">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Nombre</span>
+                  <input value={plNombre} onChange={(e) => setPlNombre(e.target.value)} className={inputCls} placeholder="Ej. Demanda ejecutiva" />
+                </label>
+                <label className="mt-2 block">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Contenido</span>
+                  <textarea
+                    value={plContenido}
+                    onChange={(e) => setPlContenido(e.target.value)}
+                    rows={12}
+                    className={`${inputCls} resize-y font-mono`}
+                    placeholder={"SEÑOR JUEZ {{proceso.despachoJuzgado}}\n\n{{mayus parte.demandante.nombre}}, identificado con {{parte.demandante.tipoDocumento}} {{parte.demandante.numeroDocumento}}, demando a {{parte.demandado.nombre}} por la suma de {{moneda datos.valor}} PESOS ({{enLetras datos.valor}} M/CTE).\n\n{{#each datos.hechos}}{{@index}}. {{this}}\n{{/each}}"}
+                  />
+                </label>
+                <details className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  <summary className="cursor-pointer select-none">Marcadores disponibles</summary>
+                  <div className="mt-2 space-y-1">
+                    <p><code>{"{{proceso.codigoInterno}}"}</code>, <code>{"{{proceso.radicado}}"}</code>, <code>{"{{proceso.despachoJuzgado}}"}</code>, <code>{"{{proceso.titulo}}"}</code></p>
+                    <p><code>{"{{parte.demandante.nombre}}"}</code>, <code>{"{{parte.demandado.numeroDocumento}}"}</code> (rol en minúsculas)</p>
+                    <p>Campos del formulario: {plantillaTipo.esquemaFormulario.map((c) => <code key={c.key} className="mr-1">{`{{datos.${c.key}}}`}</code>)}</p>
+                    <p>Helpers: <code>{"{{moneda datos.x}}"}</code>, <code>{"{{enLetras datos.x}}"}</code>, <code>{"{{fecha proceso.createdAt}}"}</code>, <code>{"{{mayus x}}"}</code></p>
+                    <p>Bloques: <code>{"{{#if datos.x}}…{{else}}…{{/if}}"}</code>, <code>{"{{#each datos.lista}}{{@index}}. {{this}}{{/each}}"}</code></p>
+                    <p>Un marcador sin dato se muestra como <code>[[falta: …]]</code> (no falla).</p>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            {plError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{plError}</p>}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setPlantillaTipo(null)} disabled={plSaving}>Cerrar</Button>
+              <Button onClick={guardarPlantilla} disabled={plSaving}>{plSaving ? "Guardando…" : plEditId ? "Guardar cambios" : "Crear plantilla"}</Button>
             </div>
           </Card>
         </div>
