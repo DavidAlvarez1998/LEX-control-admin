@@ -16,6 +16,7 @@ export type Prospecto = {
   telefono: string | null;
   cargo: string | null;
   canalEntrada: string;
+  referidoPor: string | null;
   estado: string;
   planInteresId: string | null;
   comercialId: string | null;
@@ -46,6 +47,41 @@ export type Comision = {
 export type PlanMin = { id: string; nombre: string; precioMensual: string };
 export type ComercialMin = { id: string; nombre: string; porcentajeComision: string | null };
 
+// Resumen de un comercial para la vista de equipo del ADMIN.
+export type ComercialResumen = {
+  id: string;
+  nombre: string;
+  email: string;
+  activo: boolean;
+  porcentajeComision: number | null;
+  prospectos: number;
+  ganados: number;
+  pendientesAgenda: number;
+};
+
+export const TIPO_GESTION = ["LLAMADA", "WHATSAPP", "REUNION", "VIDEOLLAMADA", "CORREO", "OTRO"] as const;
+
+export type Seguimiento = {
+  id: string;
+  prospectoId: string;
+  comercialId: string | null;
+  tipo: string;
+  titulo: string | null;
+  nota: string | null;
+  resultado: string | null;
+  fechaProgramada: string | null;
+  completada: boolean;
+  fechaCompletada: string | null;
+  canceladaEn: string | null;
+  motivoCancelacion: string | null;
+  createdAt: string;
+};
+
+// Resumen del prospecto que viaja con cada item de la agenda.
+export type ProspectoResumen = Pick<Prospecto, "id" | "nombreEmpresa" | "nombreContacto" | "estado" | "telefono">;
+export type AgendaItem = Seguimiento & { prospecto: ProspectoResumen };
+export type Agenda = { desde: string; hasta: string; items: AgendaItem[]; vencidas: AgendaItem[] };
+
 export const ventasApi = {
   prospectos: (q: { estado?: string; canal?: string; comercialId?: string } = {}) => {
     const qs = new URLSearchParams();
@@ -70,6 +106,34 @@ export const ventasApi = {
   },
   pagarComision: (id: string) => api.patch<Comision>(`/comisiones/${id}`, { estado: "PAGADA" }),
   anularComision: (id: string) => api.patch<Comision>(`/comisiones/${id}`, { estado: "ANULADA" }),
+  editarComision: (id: string, body: Record<string, unknown>) => api.patch<Comision>(`/comisiones/${id}`, body),
+
+  // Resumen del equipo comercial (solo ADMIN).
+  equipoComercial: () => api.get<ComercialResumen[]>("/equipo-comercial"),
+  // % de comisión por defecto del comercial (campo del Usuario).
+  setPorcentajeComercial: (usuarioId: string, porcentajeComision: number) =>
+    api.patch<unknown>(`/usuarios/${usuarioId}`, { porcentajeComision }),
+
+  // Seguimiento (timeline por prospecto) + agenda (pendientes por comercial).
+  seguimientos: (prospectoId: string) => api.get<Seguimiento[]>(`/prospectos/${prospectoId}/seguimientos`),
+  addSeguimiento: (prospectoId: string, body: Record<string, unknown>) =>
+    api.post<Seguimiento>(`/prospectos/${prospectoId}/seguimientos`, body),
+  editarSeguimiento: (id: string, body: Record<string, unknown>) => api.patch<Seguimiento>(`/seguimientos/${id}`, body),
+  completarSeguimiento: (id: string, body: Record<string, unknown> = {}) =>
+    api.post<Seguimiento>(`/seguimientos/${id}/completar`, body),
+  cancelarSeguimiento: (id: string, motivo: string) =>
+    api.post<Seguimiento>(`/seguimientos/${id}/cancelar`, { motivo }),
+  reabrirSeguimiento: (id: string) => api.post<Seguimiento>(`/seguimientos/${id}/reabrir`, {}),
+  borrarSeguimiento: (id: string) => api.del<void>(`/seguimientos/${id}`),
+  agenda: (q: { desde?: string; hasta?: string; comercialId?: string; incluirCompletadas?: boolean } = {}) => {
+    const qs = new URLSearchParams();
+    if (q.desde) qs.set("desde", q.desde);
+    if (q.hasta) qs.set("hasta", q.hasta);
+    if (q.comercialId) qs.set("comercialId", q.comercialId);
+    if (q.incluirCompletadas) qs.set("incluirCompletadas", "true");
+    const s = qs.toString();
+    return api.get<Agenda>(`/agenda${s ? `?${s}` : ""}`);
+  },
 
   // Fuentes auxiliares para selects.
   planes: () => api.get<PlanMin[]>("/planes").then((ps) => ps.map((p) => ({ id: p.id, nombre: p.nombre, precioMensual: p.precioMensual }))).catch(() => [] as PlanMin[]),

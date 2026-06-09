@@ -100,24 +100,14 @@ export const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
-    href: "/prospectos",
-    label: "Prospectos",
+    href: "/comercial",
+    label: "Comercial",
     comercial: true,
     icon: (
       <svg className={ic} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 5h18M3 12h18M3 19h12" />
-        <circle cx="19" cy="19" r="2" />
-      </svg>
-    ),
-  },
-  {
-    href: "/comisiones",
-    label: "Comisiones",
-    comercial: true,
-    icon: (
-      <svg className={ic} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v10M9.5 9.5a2.5 2 0 0 1 5 0c0 2.5-5 1.5-5 4a2.5 2 0 0 0 5 0" />
+        <path d="M3 7h18v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Z" />
+        <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        <path d="M3 13h18" />
       </svg>
     ),
   },
