@@ -110,9 +110,8 @@ export default function CatalogoProcesosPage() {
       ]);
       setAreas(a);
       setTipos(t);
-      // Colapsa de entrada las áreas sin ningún tipo (las llenas quedan abiertas).
-      const conTipos = new Set(t.flatMap((x) => x.areaSlugs));
-      setColapsadas(new Set(a.filter((ar) => !conTipos.has(ar.slug)).map((ar) => ar.slug)));
+      // El acordeón siempre arranca cerrado: colapsa todas las jurisdicciones.
+      setColapsadas(new Set(JURISDICCIONES.map((j) => j.v)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar");
     } finally {
