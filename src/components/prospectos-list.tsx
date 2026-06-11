@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, EmptyState, Field, inputCls, Modal, PageHeader, PlusIcon } from "@/components/ui";
 import { useNotify } from "@/components/feedback";
 import { getUser } from "@/lib/auth";
-import { ApiError } from "@/lib/api";
+import { errorMessage } from "@/lib/api";
 import { DetalleProspecto } from "@/components/prospecto-detalle";
 import {
   ventasApi, CANAL_ENTRADA, ESTADO_PROSPECTO,
@@ -26,6 +26,17 @@ const ESTADO_BADGE: Record<string, string> = {
   PERDIDO: "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300",
 };
 const EMPTY = { nombreEmpresa: "", nombreContacto: "", email: "", telefono: "", cargo: "", canalEntrada: "DIRECTO", referidoPor: "", planInteresId: "", comercialId: "", notas: "" };
+
+// Etiqueta legible por campo del formulario (para mostrar errores de validación).
+const FIELD_LABEL: Record<string, string> = {
+  nombreEmpresa: "Empresa", nombreContacto: "Nombre del contacto", email: "Email",
+  telefono: "Teléfono", cargo: "Cargo", canalEntrada: "Canal de entrada",
+  referidoPor: "Nombre del referido", planInteresId: "Plan de interés",
+  comercialId: "Comercial asignado", notas: "Notas",
+};
+
+// Validación de email permisiva (solo si el usuario escribió algo en el campo opcional).
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ProspectosList({ onOpenComercial }: { onOpenComercial?: (id: string) => void } = {}) {
   const notify = useNotify();
@@ -56,7 +67,7 @@ export function ProspectosList({ onOpenComercial }: { onOpenComercial?: (id: str
         comercialId: esAdmin && fComercial ? fComercial : undefined,
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
+      setError(errorMessage(err, "Error al cargar"));
     } finally { setLoading(false); }
   }, [fEstado, fCanal, fComercial, esAdmin]);
 
@@ -72,6 +83,7 @@ export function ProspectosList({ onOpenComercial }: { onOpenComercial?: (id: str
   async function guardarNuevo() {
     setFormError(null);
     if (!form.nombreEmpresa.trim() || !form.nombreContacto.trim()) { setFormError("Empresa y contacto son obligatorios."); return; }
+    if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) { setFormError("El email no es válido. Déjalo en blanco si no lo tienes."); return; }
     if (form.canalEntrada === "REFERIDO" && !form.referidoPor.trim()) { setFormError("Indica el nombre del referido."); return; }
     setSaving(true);
     try {
@@ -86,7 +98,7 @@ export function ProspectosList({ onOpenComercial }: { onOpenComercial?: (id: str
       });
       setCrear(false); setForm(EMPTY); await cargar();
     } catch (err) {
-      setFormError(err instanceof ApiError || err instanceof Error ? err.message : "Error al crear.");
+      setFormError(errorMessage(err, "Error al crear.", FIELD_LABEL));
     } finally { setSaving(false); }
   }
 

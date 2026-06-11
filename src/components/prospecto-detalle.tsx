@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button, Field, inputCls, Modal, MoneyInput } from "@/components/ui";
 import { useNotify } from "@/components/feedback";
-import { ApiError } from "@/lib/api";
+import { errorMessage } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import {
   ventasApi, ESTADO_EDITABLE, TIPO_GESTION,
@@ -47,7 +47,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
       if (Object.keys(body).length) await ventasApi.editarProspecto(base.id, body);
       onChange();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Error al guardar.");
+      setErr(errorMessage(e, "Error al guardar."));
     } finally { setBusy(false); }
   }
 
@@ -62,7 +62,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
       await notify({ message: "Venta cerrada: empresa, suscripción y comisión creadas.", variant: "success" });
       onChange();
     } catch (e) {
-      setErr(e instanceof ApiError || e instanceof Error ? e.message : "Error al cerrar la venta.");
+      setErr(errorMessage(e, "Error al cerrar la venta."));
       setBusy(false);
     }
   }
@@ -71,7 +71,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
     if (!motivo.trim()) { setErr("Indica el motivo."); return; }
     setBusy(true); setErr(null);
     try { await ventasApi.perder(base.id, motivo.trim()); onChange(); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Error."); setBusy(false); }
+    catch (e) { setErr(errorMessage(e, "Error.")); setBusy(false); }
   }
 
   const onPlanChange = (id: string) => {
@@ -164,7 +164,7 @@ function SeguimientoTimeline({ prospectoId, esAdmin, comerciales = [], comercial
   const cargar = useCallback(async () => {
     setLoading(true);
     try { setItems(await ventasApi.seguimientos(prospectoId)); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Error al cargar seguimiento."); }
+    catch (e) { setErr(errorMessage(e, "Error al cargar seguimiento.")); }
     finally { setLoading(false); }
   }, [prospectoId]);
   useEffect(() => { cargar(); }, [cargar]);
@@ -185,20 +185,20 @@ function SeguimientoTimeline({ prospectoId, esAdmin, comerciales = [], comercial
       setTitulo(""); setNota(""); setFecha("");
       await cargar();
     } catch (e) {
-      setErr(e instanceof ApiError || e instanceof Error ? e.message : "Error al guardar.");
+      setErr(errorMessage(e, "Error al guardar."));
     } finally { setBusy(false); }
   }
 
   async function completar(id: string) {
     setBusy(true);
     try { await ventasApi.completarSeguimiento(id); await cargar(); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Error."); }
+    catch (e) { setErr(errorMessage(e, "Error.")); }
     finally { setBusy(false); }
   }
   async function borrar(id: string) {
     setBusy(true);
     try { await ventasApi.borrarSeguimiento(id); await cargar(); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Error."); }
+    catch (e) { setErr(errorMessage(e, "Error.")); }
     finally { setBusy(false); }
   }
 

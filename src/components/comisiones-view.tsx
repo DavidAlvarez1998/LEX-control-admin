@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, EmptyState, Field, inputCls, Modal, MoneyInput, PageHeader, StatCard } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
 import { getUser } from "@/lib/auth";
-import { ApiError } from "@/lib/api";
+import { errorMessage } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import {
   ventasApi, ESTADO_COMISION,
@@ -46,7 +46,7 @@ export function ComisionesView({ comercialId }: { comercialId?: string } = {}) {
       ]);
       setItems(cs); setProspectos(ps);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
+      setError(errorMessage(err, "Error al cargar"));
     } finally { setLoading(false); }
   }, [fEstado, comercialId]);
 
@@ -63,13 +63,13 @@ export function ComisionesView({ comercialId }: { comercialId?: string } = {}) {
     const ok = await confirm({ title: "Marcar pagada", message: `¿Confirmas el pago de la comisión de ${money(c.monto)}?`, confirmText: "Marcar pagada" });
     if (!ok) return;
     try { await ventasApi.pagarComision(c.id); await cargar(); await notify({ message: "Comisión marcada como pagada.", variant: "success" }); }
-    catch (err) { await notify({ message: err instanceof Error ? err.message : "Error", variant: "error" }); }
+    catch (err) { await notify({ message: errorMessage(err, "Error"), variant: "error" }); }
   }
   async function anular(c: Comision) {
     const ok = await confirm({ title: "Anular comisión", message: "¿Anular esta comisión?", confirmText: "Anular", danger: true });
     if (!ok) return;
     try { await ventasApi.anularComision(c.id); await cargar(); await notify({ message: "Comisión anulada.", variant: "success" }); }
-    catch (err) { await notify({ message: err instanceof Error ? err.message : "Error", variant: "error" }); }
+    catch (err) { await notify({ message: errorMessage(err, "Error"), variant: "error" }); }
   }
 
   return (
@@ -172,7 +172,7 @@ function EditarComisionModal({ comision, empresa, onClose, onSaved }: {
       });
       onSaved();
     } catch (e) {
-      setErr(e instanceof ApiError || e instanceof Error ? e.message : "Error al guardar.");
+      setErr(errorMessage(e, "Error al guardar."));
     } finally { setBusy(false); }
   }
 

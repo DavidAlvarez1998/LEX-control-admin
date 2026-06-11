@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { Button, Modal, inputCls } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 
 type Jurisdiccion =
   | "ORDINARIA_CIVIL" | "ORDINARIA_LABORAL" | "CONTENCIOSO_ADMIN"
@@ -66,7 +66,7 @@ export function AreasManager({ onClose, onChanged }: { onClose: () => void; onCh
       setAreas(a);
       setOrig(Object.fromEntries(a.map((x) => [x.id, editKey(x)])));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
+      setError(errorMessage(err, "Error al cargar"));
     } finally {
       setLoading(false);
     }
@@ -91,7 +91,7 @@ export function AreasManager({ onClose, onChanged }: { onClose: () => void; onCh
       setOrig((o) => ({ ...o, [a.id]: editKey(upd) }));
       onChanged();
     } catch (err) {
-      await notify({ message: err instanceof Error ? err.message : "Error al guardar", variant: "error" });
+      await notify({ message: errorMessage(err, "Error al guardar"), variant: "error" });
     } finally {
       setBusyId(null);
     }
@@ -104,7 +104,7 @@ export function AreasManager({ onClose, onChanged }: { onClose: () => void; onCh
       patchLocal(a.id, { activo: upd.activo });
       onChanged();
     } catch (err) {
-      await notify({ message: err instanceof Error ? err.message : "Error al cambiar estado", variant: "error" });
+      await notify({ message: errorMessage(err, "Error al cambiar estado"), variant: "error" });
     } finally {
       setBusyId(null);
     }
@@ -125,7 +125,7 @@ export function AreasManager({ onClose, onChanged }: { onClose: () => void; onCh
       await cargar();
       onChanged();
     } catch (err) {
-      await notify({ message: err instanceof Error ? err.message : "Error al reordenar", variant: "error" });
+      await notify({ message: errorMessage(err, "Error al reordenar"), variant: "error" });
     } finally {
       setBusyId(null);
     }
@@ -145,7 +145,7 @@ export function AreasManager({ onClose, onChanged }: { onClose: () => void; onCh
       setAreas((as) => as.filter((x) => x.id !== a.id));
       onChanged();
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : "Error al eliminar";
+      const msg = errorMessage(err, "Error al eliminar");
       await notify({ message: msg, variant: "error" });
     } finally {
       setBusyId(null);
@@ -166,7 +166,7 @@ export function AreasManager({ onClose, onChanged }: { onClose: () => void; onCh
       await cargar();
       onChanged();
     } catch (err) {
-      await notify({ message: err instanceof Error ? err.message : "Error al crear", variant: "error" });
+      await notify({ message: errorMessage(err, "Error al crear"), variant: "error" });
     } finally {
       setCreando(false);
     }

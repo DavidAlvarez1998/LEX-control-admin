@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, StatCard } from "@/components/ui";
-import { api } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { ventasApi, ESTADO_EDITABLE, type AgendaItem } from "@/lib/ventas";
 import { formatMoney } from "@/lib/format";
@@ -61,7 +61,7 @@ function AdminDashboard() {
         ]);
         setEmpresas(e); setServicios(s); setUsuarios(u); setPlanes(p);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar");
+        setError(errorMessage(err, "Error al cargar"));
       } finally {
         setLoading(false);
       }
@@ -172,7 +172,7 @@ function ComercialDashboard() {
         );
         setAgenda({ vencidas: ag.vencidas, items: ag.items.filter((i) => !i.completada) });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar");
+        setError(errorMessage(err, "Error al cargar"));
       } finally {
         setLoading(false);
       }

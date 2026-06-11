@@ -10,7 +10,7 @@ import {
   PlusIcon,
 } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 
 type Empresa = {
@@ -122,7 +122,7 @@ export default function EmpresasPage() {
         Object.fromEntries(subs.map((s) => [s.id, { nombre: s.plan, clave: s.planClave }])),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
+      setError(errorMessage(err, "Error al cargar"));
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export default function EmpresasPage() {
       await notify({ message: `Plan actualizado a "${plan.nombre}".`, variant: "success" });
     } catch (err) {
       await notify({
-        message: err instanceof ApiError ? err.message : "No se pudo cambiar el plan.",
+        message: errorMessage(err, "No se pudo cambiar el plan."),
         variant: "error",
       });
     } finally {
@@ -203,7 +203,7 @@ export default function EmpresasPage() {
       setAsignaciones(merged);
     } catch (err) {
       setFormError(
-        err instanceof Error ? err.message : "No se pudieron cargar los servicios",
+        errorMessage(err, "No se pudieron cargar los servicios"),
       );
     } finally {
       setCargandoForm(false);
@@ -263,11 +263,7 @@ export default function EmpresasPage() {
       await cargar();
     } catch (err) {
       const msg =
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Error al guardar";
+        errorMessage(err, "Error al guardar");
       setFormError(msg);
     } finally {
       setSaving(false);
@@ -291,7 +287,7 @@ export default function EmpresasPage() {
       await notify({ message: "Empresa eliminada.", variant: "success" });
     } catch (err) {
       await notify({
-        message: err instanceof Error ? err.message : "Error al eliminar",
+        message: errorMessage(err, "Error al eliminar"),
         variant: "error",
       });
     }

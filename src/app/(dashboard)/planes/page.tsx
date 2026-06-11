@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button, Card, MoneyInput, PageHeader, PlusIcon } from "@/components/ui";
 import { useNotify } from "@/components/feedback";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 
 type Cuotas = Partial<Record<string, number | null>>;
 type Plan = { id: string; clave: string; nombre: string; precioMensual: number; activo: boolean; orden: number; modulos: string[]; cuotas: Cuotas };
@@ -43,7 +43,7 @@ export default function PlanesPage() {
       ]);
       setPlanes(p); setModulos(m); setDespachos(d);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
+      setError(errorMessage(err, "Error al cargar"));
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,7 @@ export default function PlanesPage() {
       await cargar();
       await notify({ message: editId ? "Plan actualizado." : "Plan creado.", variant: "success" });
     } catch (err) {
-      setFormError(err instanceof ApiError || err instanceof Error ? err.message : "Error al guardar");
+      setFormError(errorMessage(err, "Error al guardar"));
     } finally {
       setSaving(false);
     }
@@ -95,7 +95,7 @@ export default function PlanesPage() {
       await cargar();
       await notify({ message: "Plan asignado.", variant: "success" });
     } catch (err) {
-      await notify({ message: err instanceof Error ? err.message : "Error al asignar", variant: "error" });
+      await notify({ message: errorMessage(err, "Error al asignar"), variant: "error" });
     }
   }
 

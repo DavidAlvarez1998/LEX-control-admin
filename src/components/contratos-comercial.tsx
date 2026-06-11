@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { Button, Card, EmptyState, Field, inputCls, Modal, MoneyInput, PlusIcon, StatCard } from "./ui";
 import { DocumentosContrato, type DocumentoContrato as Documento } from "./documentos-contrato";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 
 type Estado = "ACTIVO" | "FINALIZADO" | "SUSPENDIDO";
 
@@ -56,6 +56,7 @@ const ESTADOS: Estado[] = ["ACTIVO", "FINALIZADO", "SUSPENDIDO"];
 const FORMA_PAGO = ["Mensual", "Por caso", "Comisión"];
 const MODALIDAD = ["Presencial", "Remoto", "Híbrido"];
 const UNIDAD = ["DIA", "MES", "AÑO"];
+const UNIDAD_LABEL: Record<string, string> = { DIA: "Días", MES: "Meses", AÑO: "Años" };
 
 const ESTADO_STYLES: Record<Estado, string> = {
   ACTIVO: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
@@ -153,7 +154,7 @@ export function ContratosComercial() {
       setReportes(rep);
       setComerciales(com);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error al cargar");
+      setError(errorMessage(err, "Error al cargar"));
     } finally {
       setLoading(false);
     }
@@ -202,7 +203,7 @@ export function ContratosComercial() {
       setAviso(editId ? "Contrato actualizado" : "Contrato creado");
       await cargar();
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : "Error al guardar");
+      setFormError(errorMessage(err, "Error al guardar"));
     } finally {
       setSaving(false);
     }
@@ -217,7 +218,7 @@ export function ContratosComercial() {
       setAviso("Contrato eliminado");
       await cargar();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error al eliminar");
+      setError(errorMessage(err, "Error al eliminar"));
       setConfirm(null);
     } finally {
       setConfirmBusy(false);
@@ -398,15 +399,18 @@ export function ContratosComercial() {
             <Field label="Fecha de terminación">
               <input type="date" value={form.fechaFin ?? ""} onChange={(e) => set("fechaFin", e.target.value)} className={inputCls} />
             </Field>
-            <Field label="Duración (valor)">
-              <input inputMode="numeric" value={form.duracionValor ?? ""} onChange={(e) => set("duracionValor", e.target.value.replace(/\D/g, ""))} placeholder="Ej. 12" className={inputCls} />
-            </Field>
-            <Field label="Duración (unidad)">
-              <select value={form.duracionUnidad ?? ""} onChange={(e) => set("duracionUnidad", e.target.value)} className={inputCls}>
-                <option value="">Selecciona…</option>
-                {UNIDAD.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Duración del contrato">
+                <div className="flex gap-2">
+                  <input inputMode="numeric" value={form.duracionValor ?? ""} onChange={(e) => set("duracionValor", e.target.value.replace(/\D/g, ""))} placeholder="Ej. 12" className={`${inputCls} flex-1`} />
+                  <select value={form.duracionUnidad ?? ""} onChange={(e) => set("duracionUnidad", e.target.value)} className={`${inputCls} flex-1`}>
+                    <option value="">Unidad…</option>
+                    {UNIDAD.map((o) => <option key={o} value={o}>{UNIDAD_LABEL[o]}</option>)}
+                  </select>
+                </div>
+                <span className="mt-1 block text-xs text-slate-400">Cuánto dura el contrato (vigencia). Ej.: 12 meses, 1 año.</span>
+              </Field>
+            </div>
           </div>
         )}
 

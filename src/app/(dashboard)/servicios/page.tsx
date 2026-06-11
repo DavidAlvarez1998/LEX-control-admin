@@ -10,7 +10,7 @@ import {
   PlusIcon,
 } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 
 type Servicio = {
@@ -67,7 +67,7 @@ export default function ServiciosPage() {
     try {
       setServicios(await api.get<Servicio[]>("/servicios"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
+      setError(errorMessage(err, "Error al cargar"));
     } finally {
       setLoading(false);
     }
@@ -127,11 +127,7 @@ export default function ServiciosPage() {
       await cargar();
     } catch (err) {
       const msg =
-        err instanceof ApiError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Error al guardar";
+        errorMessage(err, "Error al guardar");
       setFormError(msg);
     } finally {
       setSaving(false);
@@ -151,7 +147,7 @@ export default function ServiciosPage() {
       await cargar();
     } catch (err) {
       await notify({
-        message: err instanceof Error ? err.message : "Error al eliminar",
+        message: errorMessage(err, "Error al eliminar"),
         variant: "error",
       });
     }

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, Field, inputCls, Modal, PageHeader } from "@/components/ui";
 import { useConfirm } from "@/components/feedback";
 import { getUser } from "@/lib/auth";
-import { ApiError } from "@/lib/api";
+import { errorMessage } from "@/lib/api";
 import {
   ventasApi, TIPO_GESTION,
   type AgendaItem, type ComercialMin, type Prospecto,
@@ -76,7 +76,7 @@ export function AgendaView({ fixedComercialId, onOpenComercial }: { fixedComerci
       ]);
       setItems(ag.items); setProspectos(ps);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar la agenda.");
+      setError(errorMessage(err, "Error al cargar la agenda."));
     } finally { setLoading(false); }
   }, [inicioMes, finMes, comercialId, esAdmin, fixedComercialId]);
   useEffect(() => { cargar(); }, [cargar]);
@@ -236,7 +236,7 @@ function DiaModal({ dia, actividades, prospectos, comercialNombre, onOpenComerci
       setMostrarForm(false); // tras agendar, colapsa al botón + lista actualizada
       await onChange();
     } catch (e) {
-      setErr(e instanceof ApiError || e instanceof Error ? e.message : "Error al agendar.");
+      setErr(errorMessage(e, "Error al agendar."));
     } finally { setBusy(false); }
   }
 
@@ -373,7 +373,7 @@ function ActivityRow({ a, comercialNombre, onOpenComercial, esAdmin, onChange }:
         fechaProgramada: cuando.toISOString(),
       });
       setMode("view"); await onChange();
-    } catch (e) { setErr(e instanceof ApiError || e instanceof Error ? e.message : "Error al guardar."); }
+    } catch (e) { setErr(errorMessage(e, "Error al guardar.")); }
     finally { setBusy(false); }
   }
   async function completar() {
@@ -387,20 +387,20 @@ function ActivityRow({ a, comercialNombre, onOpenComercial, esAdmin, onChange }:
         await ventasApi.completarSeguimiento(a.id, r ? { resultado: r } : {});
       }
       setMode("view"); await onChange();
-    } catch (e) { setErr(e instanceof Error ? e.message : "Error."); }
+    } catch (e) { setErr(errorMessage(e, "Error.")); }
     finally { setBusy(false); }
   }
   async function cancelar() {
     if (!motivo.trim()) { setErr("Indica el motivo de la cancelación."); return; }
     setBusy(true); setErr(null);
     try { await ventasApi.cancelarSeguimiento(a.id, motivo.trim()); setMode("view"); await onChange(); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Error."); }
+    catch (e) { setErr(errorMessage(e, "Error.")); }
     finally { setBusy(false); }
   }
   async function reabrir() {
     setBusy(true); setErr(null);
     try { await ventasApi.reabrirSeguimiento(a.id); await onChange(); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Error."); }
+    catch (e) { setErr(errorMessage(e, "Error.")); }
     finally { setBusy(false); }
   }
   async function borrar() {
@@ -408,7 +408,7 @@ function ActivityRow({ a, comercialNombre, onOpenComercial, esAdmin, onChange }:
     if (!ok) return;
     setBusy(true);
     try { await ventasApi.borrarSeguimiento(a.id); await onChange(); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Error."); }
+    catch (e) { setErr(errorMessage(e, "Error.")); }
     finally { setBusy(false); }
   }
 

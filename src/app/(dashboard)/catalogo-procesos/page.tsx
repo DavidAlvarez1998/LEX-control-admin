@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button, Card, PageHeader, PlusIcon } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
 import { AreasManager } from "@/components/areas-manager";
-import { api, ApiError } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 
 // --- Tipos del dominio (Colombia) ---
 type Jurisdiccion =
@@ -140,7 +140,7 @@ export default function CatalogoProcesosPage() {
       // El acordeón siempre arranca cerrado: colapsa todas las jurisdicciones.
       setColapsadas(new Set(JURISDICCIONES.map((j) => j.v)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar");
+      setError(errorMessage(err, "Error al cargar"));
     } finally {
       setLoading(false);
     }
@@ -292,7 +292,7 @@ export default function CatalogoProcesosPage() {
       setFormOpen(false);
       await cargar();
     } catch (err) {
-      setFormError(err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Error al guardar");
+      setFormError(errorMessage(err, "Error al guardar"));
     } finally {
       setSaving(false);
     }
@@ -310,7 +310,7 @@ export default function CatalogoProcesosPage() {
       await api.del(`/catalogo/tipos-proceso/${t.id}`);
       await cargar();
     } catch (err) {
-      await notify({ message: err instanceof Error ? err.message : "Error al eliminar", variant: "error" });
+      await notify({ message: errorMessage(err, "Error al eliminar"), variant: "error" });
     }
   }
 
@@ -360,7 +360,7 @@ export default function CatalogoProcesosPage() {
       setPlantillas(await api.get<Plantilla[]>(`/catalogo/tipos-proceso/${plantillaTipo.id}/plantillas`));
       nuevaPlantilla();
     } catch (err) {
-      setPlError(err instanceof Error ? err.message : "Error al guardar la plantilla");
+      setPlError(errorMessage(err, "Error al guardar la plantilla"));
     } finally {
       setPlSaving(false);
     }
@@ -379,7 +379,7 @@ export default function CatalogoProcesosPage() {
       setPlantillas((ps) => ps.filter((x) => x.id !== p.id));
       if (plEditId === p.id) nuevaPlantilla();
     } catch (err) {
-      await notify({ message: err instanceof Error ? err.message : "Error al eliminar", variant: "error" });
+      await notify({ message: errorMessage(err, "Error al eliminar"), variant: "error" });
     }
   }
 

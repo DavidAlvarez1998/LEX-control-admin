@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Card, EmptyState, Field, inputCls, PageHeader, StatCard } from "@/components/ui";
 import { useNotify } from "@/components/feedback";
+import { errorMessage } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { DetalleProspecto } from "@/components/prospecto-detalle";
 import { AgendaView } from "@/components/agenda-view";
@@ -38,7 +39,7 @@ export function EquipoComercial({ openComercialId, onForcedBack }: { openComerci
   const cargar = useCallback(async () => {
     setLoading(true); setError(null);
     try { setLista(await ventasApi.equipoComercial()); }
-    catch (err) { setError(err instanceof Error ? err.message : "Error al cargar el equipo."); }
+    catch (err) { setError(errorMessage(err, "Error al cargar el equipo.")); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { if (esAdmin) { cargar(); ventasApi.planes().then(setPlanes); } else setLoading(false); }, [esAdmin, cargar]);
@@ -134,7 +135,7 @@ function ComercialDetalle({ comercial, planes, comerciales, onBack }: {
     try {
       setProspectos(await ventasApi.prospectos({ comercialId: comercial.id, estado: fEstado || undefined, canal: fCanal || undefined }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar.");
+      setError(errorMessage(err, "Error al cargar."));
     } finally { setLoading(false); }
   }, [comercial.id, fEstado, fCanal]);
   useEffect(() => { if (tab === "prospectos") cargar(); }, [cargar, tab]);
@@ -234,7 +235,7 @@ function PorcentajeComercial({ comercial }: { comercial: ComercialResumen }) {
       await ventasApi.setPorcentajeComercial(comercial.id, n);
       await notify({ message: "Porcentaje de comisión actualizado.", variant: "success" });
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Error al guardar.");
+      setErr(errorMessage(e, "Error al guardar."));
     } finally { setBusy(false); }
   }
 
