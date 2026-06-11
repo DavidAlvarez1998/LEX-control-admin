@@ -35,6 +35,7 @@ type Tipo = {
   nombre: string;
   descripcion: string | null;
   jurisdiccion: Jurisdiccion;
+  esJudicial: boolean;
   esquemaFormulario: Campo[];
   etapas: Etapa[];
   areaSlugs: string[];
@@ -43,8 +44,28 @@ type Tipo = {
 type Plantilla = { id: string; nombre: string; contenido: string };
 
 // --- Estado editable del formulario ---
+// `key` vacío = fila nueva (se derivará una key); con valor = fila existente (se
+// PRESERVA su key y sus props avanzadas no editables vía merge en guardar()).
 type CampoRow = { key: string; label: string; tipo: CampoTipo; requerido: boolean; opciones: string };
-type EtapaRow = { nombre: string; terminal: boolean; plazoDias: string; camposRequeridos: string[] }; // por label
+type EtapaRow = { key: string; nombre: string; terminal: boolean; plazoDias: string; camposRequeridos: string[] }; // camposRequeridos por label
+
+/** ¿El campo usa reglas que este formulario NO edita (condicionales)? */
+function esCampoAvanzado(c: Record<string, unknown>): boolean {
+  return !!(c.mostrarSi || c.requeridoSi);
+}
+/** ¿La etapa usa reglas que este formulario NO edita (docs, condicionales, ramas, plazos derivados, derivación)? */
+function esEtapaAvanzada(e: Record<string, unknown>): boolean {
+  const r = (e.reglas ?? {}) as Record<string, unknown>;
+  return !!(
+    e.disponibleSi ||
+    e.accion ||
+    (Array.isArray(r.documentosRequeridos) && r.documentosRequeridos.length) ||
+    (Array.isArray(r.requeridosSi) && r.requeridosSi.length) ||
+    r.plazoDesdeCampo ||
+    r.plazoTipoDias ||
+    r.plazoDiasPorValorDe
+  );
+}
 
 const inputCls =
   "mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400";
@@ -84,11 +105,17 @@ export default function CatalogoProcesosPage() {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [jurisdiccion, setJurisdiccion] = useState<Jurisdiccion>("ORDINARIA_CIVIL");
+  const [esJudicial, setEsJudicial] = useState(true);
   const [areaSlugs, setAreaSlugs] = useState<string[]>([]);
   const [campos, setCampos] = useState<CampoRow[]>([]);
   const [etapas, setEtapas] = useState<EtapaRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // Snapshot crudo del tipo en edición (key → objeto original COMPLETO), para
+  // preservar al guardar lo que el form no edita. Vacío al crear.
+  const [origCampos, setOrigCampos] = useState<Record<string, Record<string, unknown>>>({});
+  const [origEtapas, setOrigEtapas] = useState<Record<string, Record<string, unknown>>>({});
+  const [tipoAvanzado, setTipoAvanzado] = useState(false);
 
   // --- Plantillas de documento del tipo seleccionado ---
   const [plantillaTipo, setPlantillaTipo] = useState<Tipo | null>(null);
@@ -127,9 +154,13 @@ export default function CatalogoProcesosPage() {
     setNombre("");
     setDescripcion("");
     setJurisdiccion(jur ?? area?.jurisdiccion ?? "ORDINARIA_CIVIL");
+    setEsJudicial(true);
     setAreaSlugs(area ? [area.slug] : []);
     setCampos([{ key: "", label: "", tipo: "texto", requerido: true, opciones: "" }]);
-    setEtapas([{ nombre: "", terminal: false, plazoDias: "", camposRequeridos: [] }]);
+    setEtapas([{ key: "", nombre: "", terminal: false, plazoDias: "", camposRequeridos: [] }]);
+    setOrigCampos({});
+    setOrigEtapas({});
+    setTipoAvanzado(false);
     setFormError(null);
     setFormOpen(true);
   }
@@ -139,7 +170,20 @@ export default function CatalogoProcesosPage() {
     setNombre(t.nombre);
     setDescripcion(t.descripcion ?? "");
     setJurisdiccion(t.jurisdiccion);
+    setEsJudicial(t.esJudicial ?? true);
     setAreaSlugs(t.areaSlugs);
+
+    // Snapshot CRUDO (con todo lo que el form no edita: ayuda, mostrarSi,
+    // requeridoSi, documentosRequeridos, requeridosSi, disponibleSi, accion,
+    // resultado, plazos derivados…), indexado por key, para hacer merge al guardar.
+    const camposRaw = t.esquemaFormulario as unknown as Record<string, unknown>[];
+    const etapasRaw = (t.etapas as unknown as Record<string, unknown>[])
+      .slice()
+      .sort((a, b) => (a.orden as number) - (b.orden as number));
+    setOrigCampos(Object.fromEntries(camposRaw.map((c) => [c.key as string, c])));
+    setOrigEtapas(Object.fromEntries(etapasRaw.map((e) => [e.key as string, e])));
+    setTipoAvanzado(camposRaw.some(esCampoAvanzado) || etapasRaw.some(esEtapaAvanzada));
+
     setCampos(
       t.esquemaFormulario.map((c) => ({
         key: c.key,
@@ -156,6 +200,7 @@ export default function CatalogoProcesosPage() {
         .slice()
         .sort((a, b) => a.orden - b.orden)
         .map((e) => ({
+          key: e.key,
           nombre: e.nombre,
           terminal: !!e.terminal,
           plazoDias: e.reglas?.plazoDias ? String(e.reglas.plazoDias) : "",
@@ -179,29 +224,54 @@ export default function CatalogoProcesosPage() {
     const etapasLlenas = etapas.filter((e) => e.nombre.trim());
     if (etapasLlenas.length === 0) return setFormError("Agrega al menos una etapa.");
 
-    // Deriva keys estables a partir de los labels.
+    // Keys: se PRESERVAN las existentes (no se regeneran desde el label → no se
+    // rompen datos guardados, plantillas ni etapaActual de procesos vivos). Solo
+    // las filas nuevas (key vacío) derivan una key. Se reservan las existentes
+    // primero para que toKey no choque con ellas. campos y etapas comparten espacio.
     const used = new Set<string>();
+    for (const c of camposLlenos) if (c.key) used.add(c.key);
+    for (const e of etapasLlenas) if (e.key) used.add(e.key);
+
     const labelToKey = new Map<string, string>();
-    const esquemaFormulario: Campo[] = camposLlenos.map((c) => {
-      const key = toKey(c.label.trim(), used);
+    const esquemaFormulario = camposLlenos.map((c) => {
+      const orig = c.key ? origCampos[c.key] : undefined;
+      const key = c.key || toKey(c.label.trim(), used);
       labelToKey.set(c.label.trim(), key);
-      const campo: Campo = { key, label: c.label.trim(), tipo: c.tipo, requerido: c.requerido };
+      // Parte del original (conserva ayuda/mostrarSi/requeridoSi) y sobrescribe lo editable.
+      const campo: Record<string, unknown> = {
+        ...(orig ?? {}),
+        key,
+        label: c.label.trim(),
+        tipo: c.tipo,
+        requerido: c.requerido,
+      };
       if (c.tipo === "select" || c.tipo === "multiselect") {
         campo.opciones = c.opciones.split(",").map((o) => o.trim()).filter(Boolean);
+      } else {
+        delete campo.opciones;
       }
       return campo;
     });
 
-    const etapasOut: Etapa[] = etapasLlenas.map((e, i) => {
+    const etapasOut = etapasLlenas.map((e, i) => {
+      const orig = e.key ? origEtapas[e.key] : undefined;
+      const key = e.key || toKey(e.nombre.trim(), used);
       const camposRequeridos = e.camposRequeridos
         .map((lbl) => labelToKey.get(lbl.trim()))
         .filter((x): x is string => !!x);
-      const reglas: Etapa["reglas"] = {};
+      // Conserva reglas avanzadas (documentosRequeridos, requeridosSi, plazos
+      // derivados…) y sobrescribe solo lo editable (camposRequeridos simples, plazoDias).
+      const reglas: Record<string, unknown> = { ...((orig?.reglas as Record<string, unknown>) ?? {}) };
       if (camposRequeridos.length) reglas.camposRequeridos = camposRequeridos;
+      else delete reglas.camposRequeridos;
       if (e.plazoDias.trim()) reglas.plazoDias = Number(e.plazoDias);
-      const etapa: Etapa = { key: toKey(e.nombre.trim(), used), nombre: e.nombre.trim(), orden: i + 1 };
+      else delete reglas.plazoDias;
+      // Parte del original (conserva terminal/resultado/disponibleSi/accion) y sobrescribe lo editable.
+      const etapa: Record<string, unknown> = { ...(orig ?? {}), key, nombre: e.nombre.trim(), orden: i + 1 };
       if (e.terminal) etapa.terminal = true;
+      else delete etapa.terminal;
       if (Object.keys(reglas).length) etapa.reglas = reglas;
+      else delete etapa.reglas;
       return etapa;
     });
 
@@ -209,6 +279,7 @@ export default function CatalogoProcesosPage() {
       nombre: nombre.trim(),
       descripcion: descripcion.trim() || undefined,
       jurisdiccion,
+      esJudicial,
       areaSlugs,
       esquemaFormulario,
       etapas: etapasOut,
@@ -424,6 +495,15 @@ export default function CatalogoProcesosPage() {
               {editId ? "Editar tipo de proceso" : "Nuevo tipo de proceso"}
             </h3>
 
+            {tipoAvanzado && (
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                Este tipo usa <strong>reglas avanzadas</strong> (documentos requeridos,
+                campos/etapas condicionales, ramas o plazos especiales) que este formulario no
+                edita. Se <strong>conservarán</strong> al guardar; para cambiarlas, edita el
+                catálogo semilla.
+              </div>
+            )}
+
             <div className="-mr-1 flex-1 space-y-4 overflow-y-auto pr-1">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block sm:col-span-2">
@@ -439,6 +519,16 @@ export default function CatalogoProcesosPage() {
                   <select value={jurisdiccion} onChange={(e) => setJurisdiccion(e.target.value as Jurisdiccion)} className={inputCls}>
                     {JURISDICCIONES.map((j) => <option key={j.v} value={j.v}>{j.label}</option>)}
                   </select>
+                </label>
+                <label className="flex items-start gap-2 sm:col-span-2">
+                  <input type="checkbox" className="mt-1" checked={esJudicial} onChange={(e) => setEsJudicial(e.target.checked)} />
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
+                    Es proceso judicial (va ante un juez)
+                    <span className="block text-xs text-slate-400">
+                      Si está activo, sus procesos muestran los “datos judiciales”: radicado de 23 dígitos,
+                      despacho/juzgado y cuantía. Desactívalo para trámites ante una entidad (p. ej. derecho de petición).
+                    </span>
+                  </span>
                 </label>
               </div>
 
@@ -505,7 +595,7 @@ export default function CatalogoProcesosPage() {
               <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Etapas (en orden)</span>
-                  <Button variant="ghost" onClick={() => setEtapas((es) => [...es, { nombre: "", terminal: false, plazoDias: "", camposRequeridos: [] }])}>+ Etapa</Button>
+                  <Button variant="ghost" onClick={() => setEtapas((es) => [...es, { key: "", nombre: "", terminal: false, plazoDias: "", camposRequeridos: [] }])}>+ Etapa</Button>
                 </div>
                 <div className="space-y-2">
                   {etapas.map((e, i) => (
