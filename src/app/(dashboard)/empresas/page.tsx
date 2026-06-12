@@ -93,6 +93,8 @@ export default function EmpresasPage() {
   const [cambiandoPlan, setCambiandoPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Filtro de texto (nombre/NIT/email). Se prellena desde ?q= (búsqueda global).
+  const [filtro, setFiltro] = useState("");
 
   const [formOpen, setFormOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -131,6 +133,24 @@ export default function EmpresasPage() {
   useEffect(() => {
     cargar();
   }, []);
+
+  // Prellenar el filtro desde ?q= (al llegar desde la búsqueda global).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setFiltro(q);
+  }, []);
+
+  // Lista visible según el filtro de texto (nombre / NIT / email).
+  const visibles = (() => {
+    const t = filtro.trim().toLowerCase();
+    if (!t) return empresas;
+    return empresas.filter(
+      (e) =>
+        e.nombre.toLowerCase().includes(t) ||
+        (e.rfc ?? "").toLowerCase().includes(t) ||
+        (e.email ?? "").toLowerCase().includes(t),
+    );
+  })();
 
   // Asigna/cambia el plan de una empresa (PUT /planes/suscripciones/:empresaId).
   async function cambiarPlan(empresaId: string, clave: string) {
@@ -319,6 +339,15 @@ export default function EmpresasPage() {
         </Card>
       )}
 
+      {!loading && empresas.length > 0 && (
+        <input
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          placeholder="Buscar por nombre, NIT o correo…"
+          className="mb-4 w-full max-w-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+        />
+      )}
+
       {loading ? (
         <Card className="text-sm text-slate-500 dark:text-slate-400">Cargando…</Card>
       ) : empresas.length === 0 ? (
@@ -332,9 +361,13 @@ export default function EmpresasPage() {
             </Button>
           }
         />
+      ) : visibles.length === 0 ? (
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Ninguna empresa coincide con “{filtro}”.
+        </Card>
       ) : (
         <div className="space-y-4">
-          {empresas.map((e) => (
+          {visibles.map((e) => (
             <Card key={e.id} className="p-0">
               <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4">
                 <div className="min-w-0">

@@ -38,7 +38,7 @@ const FIELD_LABEL: Record<string, string> = {
 // Validación de email permisiva (solo si el usuario escribió algo en el campo opcional).
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function ProspectosList({ onOpenComercial }: { onOpenComercial?: (id: string) => void } = {}) {
+export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenComercial?: (id: string) => void; openProspectoId?: string | null } = {}) {
   const notify = useNotify();
   const esAdmin = getUser()?.rol === "ADMIN";
 
@@ -76,6 +76,12 @@ export function ProspectosList({ onOpenComercial }: { onOpenComercial?: (id: str
     ventasApi.planes().then(setPlanes);
     if (esAdmin) ventasApi.comerciales().then(setComerciales);
   }, [esAdmin]);
+  // Apertura directa desde la búsqueda global (?prospectoId=): trae ese prospecto
+  // y abre su ficha (aunque los filtros actuales lo excluyan).
+  useEffect(() => {
+    if (!openProspectoId) return;
+    ventasApi.prospecto(openProspectoId).then(setDetalle).catch(() => {});
+  }, [openProspectoId]);
 
   const planNombre = useMemo(() => (id: string | null) => planes.find((p) => p.id === id)?.nombre ?? "—", [planes]);
   const comNombre = useMemo(() => (id: string | null) => comerciales.find((c) => c.id === id)?.nombre ?? (id ? "Asignado" : "—"), [comerciales]);
