@@ -49,6 +49,17 @@ export default function PlanesPage() {
     }
   }
   useEffect(() => { cargar(); }, []);
+  // Filtro de texto del catálogo, prellenado desde ?q= (búsqueda global).
+  const [filtro, setFiltro] = useState("");
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setFiltro(q);
+  }, []);
+  const planesVisibles = (() => {
+    const t = filtro.trim().toLowerCase();
+    if (!t) return planes;
+    return planes.filter((p) => p.nombre.toLowerCase().includes(t) || p.clave.toLowerCase().includes(t));
+  })();
 
   const noBaseline = modulos.filter((m) => !m.esBaseline);
   const baseline = modulos.filter((m) => m.esBaseline);
@@ -118,8 +129,14 @@ export default function PlanesPage() {
       ) : (
         <div className="space-y-6">
           {/* Catálogo */}
+          <input
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            placeholder="Filtrar planes por nombre o clave…"
+            className="w-full max-w-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+          />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {planes.map((p) => (
+            {planesVisibles.map((p) => (
               <Card key={p.id} className={p.activo ? "" : "opacity-60"}>
                 <div className="flex items-start justify-between">
                   <div>

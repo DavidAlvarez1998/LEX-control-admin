@@ -101,6 +101,20 @@ export default function UsuariosPage() {
     cargar();
   }, []);
 
+  // Filtro de texto (nombre/email), prellenado desde ?q= (búsqueda global).
+  const [filtro, setFiltro] = useState("");
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setFiltro(q);
+  }, []);
+  const usuariosVisibles = (() => {
+    const t = filtro.trim().toLowerCase();
+    if (!t) return usuarios;
+    return usuarios.filter(
+      (u) => u.nombre.toLowerCase().includes(t) || u.email.toLowerCase().includes(t),
+    );
+  })();
+
   function abrirCrear() {
     setEditId(null);
     setForm(EMPTY_FORM);
@@ -254,6 +268,15 @@ export default function UsuariosPage() {
         </Card>
       )}
 
+      {!loading && usuarios.length > 0 && (
+        <input
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          placeholder="Buscar por nombre o correo…"
+          className="mb-4 w-full max-w-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+        />
+      )}
+
       {loading ? (
         <Card className="text-sm text-slate-500 dark:text-slate-400">Cargando…</Card>
       ) : usuarios.length === 0 ? (
@@ -267,6 +290,10 @@ export default function UsuariosPage() {
             </Button>
           }
         />
+      ) : usuariosVisibles.length === 0 ? (
+        <Card className="text-sm text-slate-500 dark:text-slate-400">
+          Ningún usuario coincide con “{filtro}”.
+        </Card>
       ) : (
         <Card className="p-0">
           <table className="w-full text-sm">
@@ -280,7 +307,7 @@ export default function UsuariosPage() {
               </tr>
             </thead>
             <tbody>
-              {usuarios.map((u) => (
+              {usuariosVisibles.map((u) => (
                 <tr key={u.id} className="border-b border-slate-100 dark:border-slate-800 last:border-0">
                   <td className="px-5 py-3">
                     <div className="font-medium text-slate-800 dark:text-slate-100">{u.nombre}</div>

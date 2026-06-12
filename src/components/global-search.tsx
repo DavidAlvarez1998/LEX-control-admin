@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
 type Resultado = {
-  tipo: "prospecto" | "empresa";
+  tipo: "prospecto" | "empresa" | "plan" | "usuario";
   id: string;
   titulo: string;
   subtitulo: string | null;
@@ -17,13 +17,22 @@ type Resultado = {
 const TIPO_LABEL: Record<Resultado["tipo"], string> = {
   prospecto: "Prospectos",
   empresa: "Empresas",
+  plan: "Planes",
+  usuario: "Usuarios",
 };
 
 function hrefDe(r: Resultado): string {
-  // Prospecto → abre su modal en el hub Comercial; empresa → prefiltra la lista.
-  return r.tipo === "prospecto"
-    ? `/comercial?tab=prospectos&prospectoId=${r.id}`
-    : `/empresas?q=${encodeURIComponent(r.titulo)}`;
+  // Prospecto → abre su modal en el hub Comercial; el resto prefiltra su lista.
+  switch (r.tipo) {
+    case "prospecto":
+      return `/comercial?tab=prospectos&prospectoId=${r.id}`;
+    case "empresa":
+      return `/empresas?q=${encodeURIComponent(r.titulo)}`;
+    case "plan":
+      return `/planes?q=${encodeURIComponent(r.titulo)}`;
+    case "usuario":
+      return `/usuarios?q=${encodeURIComponent(r.titulo)}`;
+  }
 }
 
 const inputCls =
@@ -106,7 +115,7 @@ export function GlobalSearch() {
         onChange={(e) => setQ(e.target.value)}
         onFocus={() => resultados.length > 0 && setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder="Buscar prospecto, empresa…"
+        placeholder="Buscar prospecto, empresa, plan…"
         className={inputCls}
       />
       <svg
