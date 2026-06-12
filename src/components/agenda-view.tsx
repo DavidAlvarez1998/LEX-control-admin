@@ -216,7 +216,8 @@ function DiaModal({ dia, actividades, prospectos, comercialNombre, onOpenComerci
     return activos.filter((p) =>
       p.nombreEmpresa.toLowerCase().includes(t) ||
       p.nombreContacto.toLowerCase().includes(t) ||
-      (p.telefono ?? "").toLowerCase().includes(t),
+      (p.telefono ?? "").toLowerCase().includes(t) ||
+      (p.numeroDocumento ?? "").toLowerCase().includes(t),
     ).slice(0, 8);
   }, [activos, query]);
 
@@ -270,7 +271,7 @@ function DiaModal({ dia, actividades, prospectos, comercialNombre, onOpenComerci
             </div>
           ) : (
             <>
-              <input value={query} onChange={(e) => setQuery(e.target.value)} className={inputCls} placeholder="Buscar por nombre, empresa o celular…" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} className={inputCls} placeholder="Buscar por nombre, empresa, celular o NIT/CC…" />
               <ul className="mt-1 max-h-44 overflow-auto rounded-lg border border-slate-200 dark:border-slate-800">
                 {matches.length === 0 ? (
                   <li className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">Sin resultados</li>
@@ -279,7 +280,7 @@ function DiaModal({ dia, actividades, prospectos, comercialNombre, onOpenComerci
                     <button type="button" onClick={() => { setProspectoId(p.id); setQuery(""); }}
                       className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
                       <span className="font-medium text-slate-800 dark:text-slate-100">{p.nombreEmpresa}</span>
-                      <span className="text-slate-500 dark:text-slate-400"> · {p.nombreContacto}{p.telefono ? ` · ${p.telefono}` : ""}</span>
+                      <span className="text-slate-500 dark:text-slate-400"> · {p.nombreContacto}{p.telefono ? ` · ${p.telefono}` : ""}{p.numeroDocumento ? ` · ${p.numeroDocumento}` : ""}</span>
                     </button>
                   </li>
                 ))}

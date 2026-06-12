@@ -89,6 +89,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
         <p><span className="text-slate-400">Contacto:</span> {base.nombreContacto}{base.cargo ? ` · ${base.cargo}` : ""}</p>
         {base.email && <p><span className="text-slate-400">Email:</span> {base.email}</p>}
         {base.telefono && <p><span className="text-slate-400">Teléfono:</span> {base.telefono}</p>}
+        {base.numeroDocumento && <p><span className="text-slate-400">NIT / Identificación:</span> {base.numeroDocumento}</p>}
         <p><span className="text-slate-400">Canal:</span> {humaniza(base.canalEntrada)}{base.referidoPor ? ` · referido por ${base.referidoPor}` : ""}</p>
         <p><span className="text-slate-400">Comercial:</span> {comNombre}</p>
         {base.notas && <p><span className="text-slate-400">Notas:</span> {base.notas}</p>}

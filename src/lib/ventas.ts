@@ -14,6 +14,7 @@ export type Prospecto = {
   nombreContacto: string;
   email: string | null;
   telefono: string | null;
+  numeroDocumento: string | null;
   cargo: string | null;
   canalEntrada: string;
   referidoPor: string | null;

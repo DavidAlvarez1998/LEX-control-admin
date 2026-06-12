@@ -25,12 +25,12 @@ const ESTADO_BADGE: Record<string, string> = {
   GANADO: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
   PERDIDO: "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300",
 };
-const EMPTY = { nombreEmpresa: "", nombreContacto: "", email: "", telefono: "", cargo: "", canalEntrada: "DIRECTO", referidoPor: "", planInteresId: "", comercialId: "", notas: "" };
+const EMPTY = { nombreEmpresa: "", nombreContacto: "", email: "", telefono: "", numeroDocumento: "", cargo: "", canalEntrada: "DIRECTO", referidoPor: "", planInteresId: "", comercialId: "", notas: "" };
 
 // Etiqueta legible por campo del formulario (para mostrar errores de validación).
 const FIELD_LABEL: Record<string, string> = {
   nombreEmpresa: "Empresa", nombreContacto: "Nombre del contacto", email: "Email",
-  telefono: "Teléfono", cargo: "Cargo", canalEntrada: "Canal de entrada",
+  telefono: "Teléfono", numeroDocumento: "NIT / Identificación", cargo: "Cargo", canalEntrada: "Canal de entrada",
   referidoPor: "Nombre del referido", planInteresId: "Plan de interés",
   comercialId: "Comercial asignado", notas: "Notas",
 };
@@ -90,6 +90,7 @@ export function ProspectosList({ onOpenComercial }: { onOpenComercial?: (id: str
       await ventasApi.crearProspecto({
         nombreEmpresa: form.nombreEmpresa.trim(), nombreContacto: form.nombreContacto.trim(),
         email: form.email.trim() || undefined, telefono: form.telefono.trim() || undefined,
+        numeroDocumento: form.numeroDocumento.trim() || undefined,
         cargo: form.cargo.trim() || undefined, canalEntrada: form.canalEntrada,
         referidoPor: form.canalEntrada === "REFERIDO" && form.referidoPor.trim() ? form.referidoPor.trim() : undefined,
         planInteresId: form.planInteresId || undefined,
@@ -186,6 +187,9 @@ export function ProspectosList({ onOpenComercial }: { onOpenComercial?: (id: str
         <div className="grid grid-cols-2 gap-3">
           <Field label="Email"><input value={form.email} onChange={(e) => setF("email", e.target.value)} className={inputCls} placeholder="opcional" /></Field>
           <Field label="Teléfono"><input value={form.telefono} onChange={(e) => setF("telefono", e.target.value)} className={inputCls} placeholder="opcional" /></Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="NIT / Identificación"><input value={form.numeroDocumento} onChange={(e) => setF("numeroDocumento", e.target.value)} className={inputCls} placeholder="opcional" /></Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Canal de entrada"><select value={form.canalEntrada} onChange={(e) => setF("canalEntrada", e.target.value)} className={inputCls}>{CANAL_ENTRADA.map((c) => <option key={c} value={c}>{humaniza(c)}</option>)}</select></Field>
