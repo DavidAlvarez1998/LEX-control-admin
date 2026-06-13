@@ -5,15 +5,22 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav";
 import { clearSession, getUser, type AuthUser } from "@/lib/auth";
+import { useSidebar } from "@/components/sidebar-context";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { open, setOpen } = useSidebar();
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     setUser(getUser());
   }, []);
+
+  // En móvil, cerrar el drawer al cambiar de ruta.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname, setOpen]);
 
   function logout() {
     clearSession();
@@ -24,7 +31,21 @@ export function Sidebar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900 text-slate-100">
+    <>
+      {/* Backdrop móvil */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/60 lg:hidden"
+          aria-hidden
+          onClick={() => setOpen(false)}
+        />
+      )}
+      <aside
+        className={[
+          "fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900 text-slate-100 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0",
+          open ? "translate-x-0" : "-translate-x-full",
+        ].join(" ")}
+      >
       {/* Marca → inicio */}
       <Link
         href="/"
@@ -99,6 +120,7 @@ export function Sidebar() {
           Cerrar sesión
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

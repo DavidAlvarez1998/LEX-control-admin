@@ -99,7 +99,7 @@ export function ComisionesView({ comercialId }: { comercialId?: string } = {}) {
       ) : items.length === 0 ? (
         <EmptyState title="Sin comisiones" description="Las comisiones aparecen al cerrar una venta de un prospecto." />
       ) : (
-        <Card className="p-0">
+        <Card className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-800 text-left text-slate-500 dark:text-slate-400">
               <tr>
@@ -179,7 +179,7 @@ function EditarComisionModal({ comision, empresa, onClose, onSaved }: {
   return (
     <Modal open onClose={onClose} title={`Comisión · ${empresa}`}
       footer={<><Button variant="ghost" onClick={onClose} disabled={busy}>Cancelar</Button><Button onClick={guardar} disabled={busy}>{busy ? "Guardando…" : "Guardar"}</Button></>}>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Monto comisión"><MoneyInput value={monto} onChange={setMonto} placeholder="0" className={inputCls} /></Field>
         <Field label="% (vacío = monto fijo)"><input value={porcentaje} onChange={(e) => setPorcentaje(e.target.value)} className={inputCls} placeholder="Ej. 10" inputMode="decimal" /></Field>
       </div>

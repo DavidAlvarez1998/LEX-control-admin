@@ -136,7 +136,8 @@ export function AgendaView({ fixedComercialId, onOpenComercial }: { fixedComerci
         </Card>
       )}
 
-      <Card className="p-0 overflow-hidden">
+      {/* Calendario mensual (solo desktop: 7 columnas no caben en móvil) */}
+      <Card className="hidden lg:block p-0 overflow-hidden">
         <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
           {WEEKDAYS.map((d) => <div key={d} className="py-2">{d}</div>)}
         </div>
@@ -166,6 +167,57 @@ export function AgendaView({ fixedComercialId, onOpenComercial }: { fixedComerci
             );
           })}
         </div>
+      </Card>
+
+      {/* Vista lista en móvil: días con actividad + selector para agendar cualquier día. Mismo modal. */}
+      <Card className="lg:hidden p-0 overflow-hidden">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 p-3 text-sm text-slate-600 dark:text-slate-300">
+          <span>Ver o agendar un día</span>
+          <input
+            type="date"
+            aria-label="Elegir día"
+            onChange={(e) => { if (!e.target.value) return; const [y, m, d] = e.target.value.split("-").map(Number); setDia(new Date(y, m - 1, d)); }}
+            className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm"
+          />
+        </div>
+        {(() => {
+          const diasConActs = celdas.filter((d): d is Date => !!d && (porDia.get(toKey(d))?.length ?? 0) > 0);
+          if (diasConActs.length === 0)
+            return <p className="p-4 text-sm text-slate-500 dark:text-slate-400">Sin actividades este mes. Elige un día arriba para agendar.</p>;
+          return (
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+              {diasConActs.map((d) => {
+                const k = toKey(d);
+                const acts = porDia.get(k) ?? [];
+                const esHoy = k === hoyKey;
+                const pasado = k < hoyKey;
+                const label = d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+                return (
+                  <li key={k}>
+                    <button onClick={() => setDia(d)} className="block w-full px-3 py-2.5 text-left transition hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20">
+                      <div className="mb-1 flex items-center gap-2">
+                        <span className={`text-sm font-medium capitalize ${esHoy ? "text-indigo-600 dark:text-indigo-400" : "text-slate-700 dark:text-slate-200"}`}>{label}</span>
+                        {esHoy && <span className="rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">Hoy</span>}
+                        <span className="ml-auto text-xs text-slate-400">{acts.length} actividad{acts.length === 1 ? "" : "es"}</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {acts.slice(0, 4).map((a) => (
+                          <div key={a.id} className={`truncate rounded px-1.5 py-0.5 text-xs ${
+                            a.completada ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 line-through"
+                            : pasado ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
+                            : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300"}`}>
+                            {horaDe(a.fechaProgramada)} {a.prospecto.nombreEmpresa}{mostrarComercial && comNombre(a.comercialId) ? ` · ${comNombre(a.comercialId)}` : ""}
+                          </div>
+                        ))}
+                        {acts.length > 4 && <div className="px-1 text-xs text-slate-400">+{acts.length - 4} más</div>}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          );
+        })()}
       </Card>
       {loading && <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Cargando…</p>}
 
@@ -298,7 +350,7 @@ function DiaModal({ dia, actividades, prospectos, comercialNombre, onOpenComerci
             <p className="text-xs text-slate-400 dark:text-slate-500">Este prospecto no tiene teléfono registrado.</p>
           )
         )}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Field label="Tipo"><select value={tipo} onChange={(e) => setTipo(e.target.value)} className={inputCls}>{TIPO_GESTION.map((t) => <option key={t} value={t}>{humaniza(t)}</option>)}</select></Field>
           <Field label="Hora">
             <div className="flex items-center gap-1.5">
@@ -422,7 +474,7 @@ function ActivityRow({ a, comercialNombre, onOpenComercial, esAdmin, onChange }:
 
   if (mode === "edit") return (
     <li className="rounded-lg border border-indigo-200 dark:border-indigo-800 px-3 py-2.5 text-sm space-y-2">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Field label="Tipo"><select value={tipo} onChange={(e) => setTipo(e.target.value)} className={inputCls}>{TIPO_GESTION.map((t) => <option key={t} value={t}>{humaniza(t)}</option>)}</select></Field>
         <Field label="Fecha"><input type="date" value={fechaDia} onChange={(e) => setFechaDia(e.target.value)} className={inputCls} /></Field>
       </div>

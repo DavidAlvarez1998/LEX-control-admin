@@ -93,7 +93,7 @@ function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="p-0 lg:col-span-2">
+        <Card className="p-0 overflow-x-auto lg:col-span-2">
           <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-800">
             <h3 className="font-medium text-slate-800 dark:text-slate-100">Empresas recientes</h3>
           </div>
@@ -200,7 +200,7 @@ function ComercialDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="p-0 lg:col-span-2">
+        <Card className="p-0 overflow-x-auto lg:col-span-2">
           <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-800">
             <h3 className="font-medium text-slate-800 dark:text-slate-100">Pendientes en agenda</h3>
           </div>

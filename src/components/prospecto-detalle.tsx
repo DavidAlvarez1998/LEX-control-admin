@@ -99,7 +99,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
 
       {!terminal && !ganar && !perder && (
         <div className="mt-2 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Etapa"><select value={estado} onChange={(e) => setEstado(e.target.value)} className={inputCls}>{ESTADO_EDITABLE.map((s) => <option key={s} value={s}>{humaniza(s)}</option>)}</select></Field>
             {esAdmin && <Field label="Comercial"><select value={comercialId} onChange={(e) => setComercialId(e.target.value)} className={inputCls}><option value="">Sin asignar</option>{comerciales.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></Field>}
           </div>
@@ -118,7 +118,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
         <div className="mt-2 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-3">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Cerrar venta</p>
           <Field label="Plan vendido" requerido><select value={planId} onChange={(e) => onPlanChange(e.target.value)} className={inputCls}><option value="">Selecciona…</option>{planes.map((p) => <option key={p.id} value={p.id}>{p.nombre} · {money(p.precioMensual)}</option>)}</select></Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Precio de venta"><MoneyInput value={precioVenta} onChange={setPrecioVenta} placeholder="0" className={inputCls} /></Field>
             <Field label="Comisión fija (opcional)"><MoneyInput value={montoFijo} onChange={setMontoFijo} placeholder="usa el % del comercial" className={inputCls} /></Field>
           </div>
@@ -209,7 +209,7 @@ function SeguimientoTimeline({ prospectoId, esAdmin, comerciales = [], comercial
 
       {/* Alta de actividad */}
       <div className="mb-4 rounded-lg bg-slate-50 dark:bg-slate-900/60 p-3 space-y-2">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Field label="Tipo"><select value={tipo} onChange={(e) => setTipo(e.target.value)} className={inputCls}>{TIPO_GESTION.map((t) => <option key={t} value={t}>{humaniza(t)}</option>)}</select></Field>
           <Field label="Programar para" requerido><input type="datetime-local" value={fecha} onChange={(e) => setFecha(e.target.value)} className={inputCls} /></Field>
         </div>

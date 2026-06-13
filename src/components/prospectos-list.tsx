@@ -145,7 +145,7 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
       ) : items.length === 0 ? (
         <EmptyState title="Sin prospectos" description="Registra una empresa interesada para empezar el embudo de venta." />
       ) : (
-        <Card className="p-0">
+        <Card className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-800 text-left text-slate-500 dark:text-slate-400">
               <tr>
@@ -186,18 +186,18 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
       {/* Crear */}
       <Modal open={crear} onClose={() => !saving && setCrear(false)} title="Nuevo prospecto"
         footer={<><Button variant="ghost" onClick={() => setCrear(false)} disabled={saving}>Cancelar</Button><Button onClick={guardarNuevo} disabled={saving}>{saving ? "Guardando…" : "Crear"}</Button></>}>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Empresa" requerido><input value={form.nombreEmpresa} onChange={(e) => setF("nombreEmpresa", e.target.value)} className={inputCls} placeholder="Despacho…" /></Field>
           <Field label="Nombre del contacto" requerido><input value={form.nombreContacto} onChange={(e) => setF("nombreContacto", e.target.value)} className={inputCls} placeholder="Ej. Juan Pérez" /></Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Email"><input value={form.email} onChange={(e) => setF("email", e.target.value)} className={inputCls} placeholder="opcional" /></Field>
           <Field label="Teléfono"><input value={form.telefono} onChange={(e) => setF("telefono", e.target.value)} className={inputCls} placeholder="opcional" /></Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="NIT / Identificación"><input value={form.numeroDocumento} onChange={(e) => setF("numeroDocumento", e.target.value)} className={inputCls} placeholder="opcional" /></Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Canal de entrada"><select value={form.canalEntrada} onChange={(e) => setF("canalEntrada", e.target.value)} className={inputCls}>{CANAL_ENTRADA.map((c) => <option key={c} value={c}>{humaniza(c)}</option>)}</select></Field>
           <Field label="Plan de interés"><select value={form.planInteresId} onChange={(e) => setF("planInteresId", e.target.value)} className={inputCls}><option value="">—</option>{planes.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select></Field>
         </div>

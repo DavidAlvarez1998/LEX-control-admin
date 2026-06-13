@@ -189,7 +189,7 @@ export default function ServiciosPage() {
           }
         />
       ) : (
-        <Card className="p-0">
+        <Card className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-slate-800 text-left text-slate-500 dark:text-slate-400">
               <tr>
@@ -288,7 +288,7 @@ export default function ServiciosPage() {
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="text-sm text-slate-600 dark:text-slate-300">Precio base</span>
                   <MoneyInput
@@ -312,7 +312,7 @@ export default function ServiciosPage() {
                 </label>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="text-sm text-slate-600 dark:text-slate-300">
                     Unidad{" "}

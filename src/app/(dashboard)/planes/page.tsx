@@ -162,7 +162,7 @@ export default function PlanesPage() {
           </div>
 
           {/* Asignación a despachos */}
-          <Card className="p-0">
+          <Card className="p-0 overflow-x-auto">
             <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-800">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Plan por despacho</h3>
             </div>
@@ -198,7 +198,7 @@ export default function PlanesPage() {
           <Card className="max-h-[90vh] w-full max-w-lg overflow-y-auto">
             <h3 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">{editId ? "Editar plan" : "Nuevo plan"}</h3>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="text-sm text-slate-600 dark:text-slate-300">Clave {!editId && <span className="text-red-500">*</span>}</span>
                   {editId ? (
@@ -215,7 +215,7 @@ export default function PlanesPage() {
                     className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
                 </label>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="text-sm text-slate-600 dark:text-slate-300">Precio mensual (COP)</span>
                   <div className="mt-1"><MoneyInput value={form.precio} onChange={(v) => setForm({ ...form, precio: v })} placeholder="0" className={INPUT} /></div>
@@ -229,7 +229,7 @@ export default function PlanesPage() {
 
               <div>
                 <span className="text-sm text-slate-600 dark:text-slate-300">Cupos por rol <span className="text-xs text-slate-400">(vacío = ilimitado)</span></span>
-                <div className="mt-1 grid grid-cols-4 gap-2">
+                <div className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {ROLES.map((r) => (
                     <label key={r} className="block">
                       <span className="text-[11px] text-slate-400">{r.slice(0, 5)}</span>
@@ -242,7 +242,7 @@ export default function PlanesPage() {
 
               <div>
                 <span className="text-sm text-slate-600 dark:text-slate-300">Módulos incluidos</span>
-                <div className="mt-1 grid grid-cols-2 gap-1">
+                <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2">
                   {noBaseline.map((m) => (
                     <label key={m.id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                       <input type="checkbox" checked={form.modulos.includes(m.clave)}
