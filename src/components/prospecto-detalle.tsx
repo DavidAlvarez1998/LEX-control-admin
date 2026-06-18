@@ -98,7 +98,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
       </div>
 
       {!terminal && !ganar && !perder && (
-        <div className="mt-2 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-3">
+        <div className="mt-2 space-y-3 border-t border-slate-200 dark:border-slate-600 pt-3">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Etapa"><select value={estado} onChange={(e) => setEstado(e.target.value)} className={inputCls}>{ESTADO_EDITABLE.map((s) => <option key={s} value={s}>{humaniza(s)}</option>)}</select></Field>
             {esAdmin && <Field label="Comercial"><select value={comercialId} onChange={(e) => setComercialId(e.target.value)} className={inputCls}><option value="">Sin asignar</option>{comerciales.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></Field>}
@@ -115,7 +115,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
       )}
 
       {ganar && (
-        <div className="mt-2 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-3">
+        <div className="mt-2 space-y-3 border-t border-slate-200 dark:border-slate-600 pt-3">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Cerrar venta</p>
           <Field label="Plan vendido" requerido><select value={planId} onChange={(e) => onPlanChange(e.target.value)} className={inputCls}><option value="">Selecciona…</option>{planes.map((p) => <option key={p.id} value={p.id}>{p.nombre} · {money(p.precioMensual)}</option>)}</select></Field>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -132,7 +132,7 @@ export function DetalleProspecto({ base, esAdmin, planes, comerciales, onClose, 
       )}
 
       {perder && (
-        <div className="mt-2 space-y-3 border-t border-slate-200 dark:border-slate-800 pt-3">
+        <div className="mt-2 space-y-3 border-t border-slate-200 dark:border-slate-600 pt-3">
           <Field label="Motivo de pérdida" requerido><input value={motivo} onChange={(e) => setMotivo(e.target.value)} className={inputCls} placeholder="Ej. Precio, eligió competencia…" /></Field>
           {err && <p className="text-sm text-red-600 dark:text-red-400">{err}</p>}
           <div className="flex justify-end gap-2">
@@ -204,11 +204,11 @@ function SeguimientoTimeline({ prospectoId, esAdmin, comerciales = [], comercial
   }
 
   return (
-    <div className="mt-3 border-t border-slate-200 dark:border-slate-800 pt-3">
+    <div className="mt-3 border-t border-slate-200 dark:border-slate-600 pt-3">
       <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Seguimiento</p>
 
       {/* Alta de actividad */}
-      <div className="mb-4 rounded-lg bg-slate-50 dark:bg-slate-900/60 p-3 space-y-2">
+      <div className="mb-4 rounded-lg bg-slate-200 dark:bg-slate-700/60 p-3 space-y-2">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Field label="Tipo"><select value={tipo} onChange={(e) => setTipo(e.target.value)} className={inputCls}>{TIPO_GESTION.map((t) => <option key={t} value={t}>{humaniza(t)}</option>)}</select></Field>
           <Field label="Programar para" requerido><input type="datetime-local" value={fecha} onChange={(e) => setFecha(e.target.value)} className={inputCls} /></Field>
@@ -246,10 +246,10 @@ function SeguimientoTimeline({ prospectoId, esAdmin, comerciales = [], comercial
             const pendiente = !s.completada && !cancelada;
             const vencida = pendiente && s.fechaProgramada != null && new Date(s.fechaProgramada) < new Date();
             return (
-              <li key={s.id} className={`flex items-start gap-3 rounded-lg border border-slate-100 dark:border-slate-800 px-3 py-2 text-sm ${!pendiente ? "opacity-70" : ""}`}>
+              <li key={s.id} className={`flex items-start gap-3 rounded-lg border border-slate-100 dark:border-slate-600 px-3 py-2 text-sm ${!pendiente ? "opacity-70" : ""}`}>
                 <span className={`mt-0.5 rounded px-2 py-0.5 text-xs font-medium ${
                   s.completada ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-                  : cancelada ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
+                  : cancelada ? "bg-slate-200 dark:bg-slate-600 text-slate-400 dark:text-slate-500"
                   : vencida ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
                   : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300"}`}>
                   {humaniza(s.tipo)}

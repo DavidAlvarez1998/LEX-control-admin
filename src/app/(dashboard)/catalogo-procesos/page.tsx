@@ -68,7 +68,7 @@ function esEtapaAvanzada(e: Record<string, unknown>): boolean {
 }
 
 const inputCls =
-  "mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400";
+  "mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400";
 
 /** Deriva una clave camelCase estable a partir de una etiqueta, sin colisiones. */
 function toKey(label: string, used: Set<string>): string {
@@ -406,7 +406,7 @@ export default function CatalogoProcesosPage() {
         {t.descripcion && <div className="text-xs text-slate-500 dark:text-slate-400">{t.descripcion}</div>}
         <div className="mt-2 flex flex-wrap gap-1.5">
           {t.areaSlugs.map((s) => (
-            <span key={s} className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300">
+            <span key={s} className="rounded bg-slate-200 dark:bg-slate-600 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300">
               {areas.find((a) => a.slug === s)?.nombre ?? s}
             </span>
           ))}
@@ -452,7 +452,7 @@ export default function CatalogoProcesosPage() {
             const lista = tiposPorJurisdiccion(j.v);
             const abierta = !colapsadas.has(j.v);
             return (
-              <div key={j.v} className="rounded-xl border border-slate-200 dark:border-slate-800">
+              <div key={j.v} className="rounded-xl border border-slate-200 dark:border-slate-600">
                 <div className="flex items-center justify-between gap-3 px-4 py-3">
                   <button
                     onClick={() => toggleJur(j.v)}
@@ -462,14 +462,14 @@ export default function CatalogoProcesosPage() {
                       <polyline points="9 6 15 12 9 18" />
                     </svg>
                     <span className="truncate font-medium text-slate-800 dark:text-slate-100">{j.label}</span>
-                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">{lista.length}</span>
+                    <span className="rounded-full bg-slate-200 dark:bg-slate-600 px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400">{lista.length}</span>
                   </button>
                   <button onClick={() => abrirCrear(undefined, j.v)} className="flex shrink-0 items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">
                     <PlusIcon /> Crear tipo
                   </button>
                 </div>
                 {abierta && (
-                  <div className="space-y-2 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+                  <div className="space-y-2 border-t border-slate-100 px-4 py-3 dark:border-slate-600">
                     {lista.length === 0 ? (
                       <p className="text-sm text-slate-400">
                         Sin tipos en esta jurisdicción. <button onClick={() => abrirCrear(undefined, j.v)} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Crear el primero</button>.
@@ -533,7 +533,7 @@ export default function CatalogoProcesosPage() {
               </div>
 
               {/* Áreas de práctica */}
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+              <div className="border-t border-slate-100 dark:border-slate-600 pt-3">
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Áreas de práctica <span className="text-red-500">*</span></span>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {areas.map((a) => {
@@ -543,7 +543,7 @@ export default function CatalogoProcesosPage() {
                         key={a.slug}
                         type="button"
                         onClick={() => setAreaSlugs((s) => on ? s.filter((x) => x !== a.slug) : [...s, a.slug])}
-                        className={`rounded-full border px-3 py-1 text-sm ${on ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300" : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"}`}
+                        className={`rounded-full border px-3 py-1 text-sm ${on ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300" : "border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"}`}
                       >
                         {a.nombre}{!a.activo && " (inactiva)"}
                       </button>
@@ -553,14 +553,14 @@ export default function CatalogoProcesosPage() {
               </div>
 
               {/* Campos del formulario */}
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+              <div className="border-t border-slate-100 dark:border-slate-600 pt-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Campos del formulario</span>
                   <Button variant="ghost" onClick={() => setCampos((cs) => [...cs, { key: "", label: "", tipo: "texto", requerido: false, opciones: "" }])}>+ Campo</Button>
                 </div>
                 <div className="space-y-2">
                   {campos.map((c, i) => (
-                    <div key={i} className="rounded-lg border border-slate-200 dark:border-slate-800 p-3">
+                    <div key={i} className="rounded-lg border border-slate-200 dark:border-slate-600 p-3">
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:items-end">
                         <label className="block sm:col-span-5">
                           <span className="text-xs text-slate-500 dark:text-slate-400">Etiqueta</span>
@@ -592,14 +592,14 @@ export default function CatalogoProcesosPage() {
               </div>
 
               {/* Etapas */}
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+              <div className="border-t border-slate-100 dark:border-slate-600 pt-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Etapas (en orden)</span>
                   <Button variant="ghost" onClick={() => setEtapas((es) => [...es, { key: "", nombre: "", terminal: false, plazoDias: "", camposRequeridos: [] }])}>+ Etapa</Button>
                 </div>
                 <div className="space-y-2">
                   {etapas.map((e, i) => (
-                    <div key={i} className="rounded-lg border border-slate-200 dark:border-slate-800 p-3">
+                    <div key={i} className="rounded-lg border border-slate-200 dark:border-slate-600 p-3">
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:items-end">
                         <label className="block sm:col-span-6">
                           <span className="text-xs text-slate-500 dark:text-slate-400">Etapa {i + 1}</span>
@@ -628,7 +628,7 @@ export default function CatalogoProcesosPage() {
                                   key={lbl}
                                   type="button"
                                   onClick={() => setEtapa(i, { camposRequeridos: on ? e.camposRequeridos.filter((x) => x !== lbl) : [...e.camposRequeridos, lbl] })}
-                                  className={`rounded-full border px-2 py-0.5 text-xs ${on ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400"}`}
+                                  className={`rounded-full border px-2 py-0.5 text-xs ${on ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" : "border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400"}`}
                                 >
                                   {lbl}
                                 </button>
@@ -673,7 +673,7 @@ export default function CatalogoProcesosPage() {
               ) : (
                 <ul className="space-y-2">
                   {plantillas.map((p) => (
-                    <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
+                    <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600">
                       <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{p.nombre}</span>
                       <span className="flex shrink-0 gap-3">
                         <button onClick={() => editarPlantilla(p)} className="text-xs font-medium text-indigo-600 hover:underline">Editar</button>
@@ -685,7 +685,7 @@ export default function CatalogoProcesosPage() {
               )}
 
               {/* Editor */}
-              <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
+              <div className="border-t border-slate-100 pt-4 dark:border-slate-600">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                     {plEditId ? "Editar plantilla" : "Nueva plantilla"}

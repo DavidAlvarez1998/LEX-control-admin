@@ -195,7 +195,7 @@ export function AreasManager({ onClose, onChanged }: { onClose: () => void; onCh
             return (
               <div
                 key={a.id}
-                className={`rounded-lg border p-2.5 ${a.activo ? "border-slate-200 dark:border-slate-800" : "border-dashed border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/40"}`}
+                className={`rounded-lg border p-2.5 ${a.activo ? "border-slate-200 dark:border-slate-600" : "border-dashed border-slate-300 bg-slate-200 dark:border-slate-600 dark:bg-slate-700/40"}`}
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex flex-col">

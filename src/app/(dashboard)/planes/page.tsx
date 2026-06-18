@@ -15,7 +15,7 @@ const ROLES = ["ADMINISTRADOR", "JURIDICO", "CONTABLE", "COMERCIAL"];
 type Form = { clave: string; nombre: string; precio: string; activo: boolean; orden: string; modulos: string[]; cuotas: Record<string, string> };
 const EMPTY: Form = { clave: "", nombre: "", precio: "", activo: true, orden: "0", modulos: [], cuotas: { ADMINISTRADOR: "", JURIDICO: "", CONTABLE: "", COMERCIAL: "" } };
 const money = (v: number) => `$${v.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`;
-const INPUT = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100";
+const INPUT = "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100";
 const cuotaTxt = (v: number | null | undefined) => (v === null ? "∞" : v === undefined ? "0" : String(v));
 
 export default function PlanesPage() {
@@ -133,7 +133,7 @@ export default function PlanesPage() {
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
             placeholder="Filtrar planes por nombre o clave…"
-            className="w-full max-w-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+            className="w-full max-w-sm rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
           />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {planesVisibles.map((p) => (
@@ -150,20 +150,20 @@ export default function PlanesPage() {
                   <p className="font-medium text-slate-600 dark:text-slate-300">Cupos por rol</p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {ROLES.map((r) => (
-                      <span key={r} className="rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">{r.slice(0, 4)}: {cuotaTxt(p.cuotas[r])}</span>
+                      <span key={r} className="rounded bg-slate-200 px-1.5 py-0.5 dark:bg-slate-600">{r.slice(0, 4)}: {cuotaTxt(p.cuotas[r])}</span>
                     ))}
                   </div>
                   <p className="mt-2 font-medium text-slate-600 dark:text-slate-300">Módulos extra</p>
                   <p>{p.modulos.length ? p.modulos.join(", ") : "—"}</p>
                 </div>
-                {!p.activo && <span className="mt-3 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-800">Inactivo</span>}
+                {!p.activo && <span className="mt-3 inline-block rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-500 dark:bg-slate-600">Inactivo</span>}
               </Card>
             ))}
           </div>
 
           {/* Asignación a despachos */}
           <Card className="p-0 overflow-x-auto">
-            <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-800">
+            <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-600">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Plan por despacho</h3>
             </div>
             <table className="w-full text-sm">
@@ -172,14 +172,14 @@ export default function PlanesPage() {
               </thead>
               <tbody>
                 {despachos.map((d) => (
-                  <tr key={d.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <tr key={d.id} className="border-t border-slate-100 dark:border-slate-600">
                     <td className="px-5 py-2 font-medium text-slate-800 dark:text-slate-100">{d.nombre}{!d.activo && <span className="ml-2 text-xs text-slate-400">(inactivo)</span>}</td>
                     <td className="px-5 py-2 text-slate-600 dark:text-slate-300">{d.plan ?? <span className="text-slate-400">sin plan</span>}</td>
                     <td className="px-5 py-2">
                       <select
                         value={d.planClave ?? ""}
                         onChange={(e) => asignar(d.id, e.target.value)}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                        className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                       >
                         <option value="" disabled>Selecciona…</option>
                         {planes.filter((p) => p.activo).map((p) => <option key={p.id} value={p.clave}>{p.nombre}</option>)}
@@ -202,7 +202,7 @@ export default function PlanesPage() {
                 <label className="block">
                   <span className="text-sm text-slate-600 dark:text-slate-300">Clave {!editId && <span className="text-red-500">*</span>}</span>
                   {editId ? (
-                    <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400">
+                    <div className="mt-1 rounded-lg border border-slate-200 bg-slate-200 px-3 py-2 text-sm text-slate-500 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-400">
                       {form.clave} <span className="text-xs">(no editable)</span>
                     </div>
                   ) : (
@@ -212,7 +212,7 @@ export default function PlanesPage() {
                 <label className="block">
                   <span className="text-sm text-slate-600 dark:text-slate-300">Nombre <span className="text-red-500">*</span></span>
                   <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Bufete PRO"
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100" />
                 </label>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -223,7 +223,7 @@ export default function PlanesPage() {
                 <label className="block">
                   <span className="text-sm text-slate-600 dark:text-slate-300">Orden</span>
                   <input value={form.orden} onChange={(e) => setForm({ ...form, orden: e.target.value.replace(/\D/g, "") })}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100" />
                 </label>
               </div>
 
@@ -234,7 +234,7 @@ export default function PlanesPage() {
                     <label key={r} className="block">
                       <span className="text-[11px] text-slate-400">{r.slice(0, 5)}</span>
                       <input value={form.cuotas[r]} onChange={(e) => setForm({ ...form, cuotas: { ...form.cuotas, [r]: e.target.value.replace(/\D/g, "") } })} placeholder="∞"
-                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
+                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100" />
                     </label>
                   ))}
                 </div>

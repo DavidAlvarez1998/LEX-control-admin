@@ -344,7 +344,7 @@ export default function EmpresasPage() {
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
           placeholder="Buscar por nombre, NIT o correo…"
-          className="mb-4 w-full max-w-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+          className="mb-4 w-full max-w-sm rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
         />
       )}
 
@@ -387,7 +387,7 @@ export default function EmpresasPage() {
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       e.activo
                         ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                        : "bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-400"
                     }`}
                   >
                     {e.activo ? "Activa" : "Inactiva"}
@@ -403,7 +403,7 @@ export default function EmpresasPage() {
 
               {/* Plan + servicios asignados de la empresa. */}
               <div className="px-5 pb-4 pt-3 space-y-3">
-                <div className="border-t border-dashed border-slate-200 dark:border-slate-800 pt-2">
+                <div className="border-t border-dashed border-slate-200 dark:border-slate-600 pt-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                     Plan
                   </p>
@@ -412,7 +412,7 @@ export default function EmpresasPage() {
                       value={planPorEmpresa[e.id]?.clave ?? ""}
                       disabled={cambiandoPlan === e.id}
                       onChange={(ev) => cambiarPlan(e.id, ev.target.value)}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 outline-none focus:border-indigo-400 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                      className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-sm text-slate-700 outline-none focus:border-indigo-400 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
                     >
                       <option value="" disabled>
                         Sin plan — selecciona…
@@ -431,7 +431,7 @@ export default function EmpresasPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-dashed border-slate-200 dark:border-slate-800 pt-2">
+                <div className="border-t border-dashed border-slate-200 dark:border-slate-600 pt-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                     Servicios
                   </p>
@@ -444,7 +444,7 @@ export default function EmpresasPage() {
                       {(e.servicios ?? []).map((s, i) => (
                         <span
                           key={i}
-                          className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300"
+                          className="rounded bg-slate-200 dark:bg-slate-600 px-2 py-0.5 text-xs text-slate-600 dark:text-slate-300"
                         >
                           {s.servicio.nombre}
                         </span>
@@ -478,7 +478,7 @@ export default function EmpresasPage() {
                 <input
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="Ej. Bufete García & Asociados"
                 />
               </label>
@@ -488,7 +488,7 @@ export default function EmpresasPage() {
                 <input
                   value={form.rfc}
                   onChange={(e) => setForm({ ...form, rfc: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="Identificador fiscal"
                 />
               </label>
@@ -499,7 +499,7 @@ export default function EmpresasPage() {
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="contacto@empresa.com"
                 />
               </label>
@@ -509,7 +509,7 @@ export default function EmpresasPage() {
                 <input
                   value={form.telefono}
                   onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="300 123 4567"
                 />
               </label>
@@ -530,7 +530,7 @@ export default function EmpresasPage() {
               )}
 
               {/* Servicios contratados */}
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+              <div className="border-t border-slate-100 dark:border-slate-600 pt-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                     Servicios contratados
@@ -561,7 +561,7 @@ export default function EmpresasPage() {
                           className={`rounded-lg border p-3 ${
                             a.seleccionado
                               ? "border-indigo-200 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-950/40"
-                              : "border-slate-200 dark:border-slate-800"
+                              : "border-slate-200 dark:border-slate-600"
                           }`}
                         >
                           <label className="flex items-center gap-2">
@@ -594,7 +594,7 @@ export default function EmpresasPage() {
                                   onChange={(precioBase) =>
                                     setAsignacion(s.id, { precioBase })
                                   }
-                                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
+                                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
                                 />
                               </label>
                               {s.unidad && (
@@ -608,7 +608,7 @@ export default function EmpresasPage() {
                                       onChange={(precioPorUnidad) =>
                                         setAsignacion(s.id, { precioPorUnidad })
                                       }
-                                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
+                                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
                                     />
                                   </label>
                                   <label className="block">
@@ -625,7 +625,7 @@ export default function EmpresasPage() {
                                           incluidos: e.target.value,
                                         })
                                       }
-                                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
+                                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-2 py-1.5 text-sm outline-none focus:border-indigo-400"
                                     />
                                   </label>
                                 </>

@@ -123,7 +123,7 @@ export function AgendaView({ fixedComercialId, onOpenComercial }: { fixedComerci
         <Button variant="ghost" onClick={() => mover(1)}>›</Button>
         <Button variant="ghost" onClick={() => setCursor(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); })}>Hoy</Button>
         {esAdmin && !embedded && (
-          <select value={comercialId} onChange={(e) => setComercialId(e.target.value)} className="ml-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm">
+          <select value={comercialId} onChange={(e) => setComercialId(e.target.value)} className="ml-auto rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm">
             <option value="">Todos los comerciales</option>
             {comerciales.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
@@ -138,24 +138,24 @@ export function AgendaView({ fixedComercialId, onOpenComercial }: { fixedComerci
 
       {/* Calendario mensual (solo desktop: 7 columnas no caben en móvil) */}
       <Card className="hidden lg:block p-0 overflow-hidden">
-        <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-600 bg-slate-200 dark:bg-slate-700/60 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
           {WEEKDAYS.map((d) => <div key={d} className="py-2">{d}</div>)}
         </div>
         <div className="grid grid-cols-7">
           {celdas.map((d, i) => {
-            if (!d) return <div key={i} className="min-h-24 border-b border-r border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30" />;
+            if (!d) return <div key={i} className="min-h-24 border-b border-r border-slate-100 dark:border-slate-600 bg-slate-200/50 dark:bg-slate-700/30" />;
             const k = toKey(d);
             const acts = porDia.get(k) ?? [];
             const esHoy = k === hoyKey;
             const pasado = k < hoyKey;
             return (
               <button key={i} onClick={() => setDia(d)}
-                className="min-h-24 border-b border-r border-slate-100 dark:border-slate-800 p-1.5 text-left align-top transition hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20">
+                className="min-h-24 border-b border-r border-slate-100 dark:border-slate-600 p-1.5 text-left align-top transition hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20">
                 <div className={`mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${esHoy ? "bg-indigo-600 font-semibold text-white" : "text-slate-500 dark:text-slate-400"}`}>{d.getDate()}</div>
                 <div className="space-y-0.5">
                   {acts.slice(0, 3).map((a) => (
                     <div key={a.id} className={`truncate rounded px-1 py-0.5 text-[11px] ${
-                      a.completada ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 line-through"
+                      a.completada ? "bg-slate-200 dark:bg-slate-600 text-slate-400 dark:text-slate-500 line-through"
                       : pasado ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
                       : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300"}`}>
                       {horaDe(a.fechaProgramada)} {a.prospecto.nombreEmpresa}{mostrarComercial && comNombre(a.comercialId) ? ` · ${comNombre(a.comercialId)}` : ""}
@@ -171,13 +171,13 @@ export function AgendaView({ fixedComercialId, onOpenComercial }: { fixedComerci
 
       {/* Vista lista en móvil: días con actividad + selector para agendar cualquier día. Mismo modal. */}
       <Card className="lg:hidden p-0 overflow-hidden">
-        <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 p-3 text-sm text-slate-600 dark:text-slate-300">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-600 p-3 text-sm text-slate-600 dark:text-slate-300">
           <span>Ver o agendar un día</span>
           <input
             type="date"
             aria-label="Elegir día"
             onChange={(e) => { if (!e.target.value) return; const [y, m, d] = e.target.value.split("-").map(Number); setDia(new Date(y, m - 1, d)); }}
-            className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm"
+            className="rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-2 py-1.5 text-sm"
           />
         </div>
         {(() => {
@@ -203,7 +203,7 @@ export function AgendaView({ fixedComercialId, onOpenComercial }: { fixedComerci
                       <div className="space-y-0.5">
                         {acts.slice(0, 4).map((a) => (
                           <div key={a.id} className={`truncate rounded px-1.5 py-0.5 text-xs ${
-                            a.completada ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 line-through"
+                            a.completada ? "bg-slate-200 dark:bg-slate-600 text-slate-400 dark:text-slate-500 line-through"
                             : pasado ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
                             : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300"}`}>
                             {horaDe(a.fechaProgramada)} {a.prospecto.nombreEmpresa}{mostrarComercial && comNombre(a.comercialId) ? ` · ${comNombre(a.comercialId)}` : ""}
@@ -313,24 +313,24 @@ function DiaModal({ dia, actividades, prospectos, comercialNombre, onOpenComerci
 
       {/* Formulario: directo si el día está vacío, o al pulsar el botón */}
       {(actividades.length === 0 || mostrarForm) && (
-      <div className="rounded-lg bg-slate-50 dark:bg-slate-900/60 p-3 space-y-2">
+      <div className="rounded-lg bg-slate-200 dark:bg-slate-700/60 p-3 space-y-2">
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Agendar actividad</p>
         <Field label="Cliente / prospecto" requerido>
           {sel ? (
-            <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2">
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2">
               <span className="truncate text-slate-800 dark:text-slate-100"><b>{sel.nombreEmpresa}</b> · {sel.nombreContacto}</span>
               <button type="button" onClick={() => { setProspectoId(""); setQuery(""); }} className="shrink-0 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Cambiar</button>
             </div>
           ) : (
             <>
               <input value={query} onChange={(e) => setQuery(e.target.value)} className={inputCls} placeholder="Buscar por nombre, empresa, celular o NIT/CC…" />
-              <ul className="mt-1 max-h-44 overflow-auto rounded-lg border border-slate-200 dark:border-slate-800">
+              <ul className="mt-1 max-h-44 overflow-auto rounded-lg border border-slate-200 dark:border-slate-600">
                 {matches.length === 0 ? (
                   <li className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">Sin resultados</li>
                 ) : matches.map((p) => (
                   <li key={p.id}>
                     <button type="button" onClick={() => { setProspectoId(p.id); setQuery(""); }}
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800">
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-200 dark:hover:bg-slate-600">
                       <span className="font-medium text-slate-800 dark:text-slate-100">{p.nombreEmpresa}</span>
                       <span className="text-slate-500 dark:text-slate-400"> · {p.nombreContacto}{p.telefono ? ` · ${p.telefono}` : ""}{p.numeroDocumento ? ` · ${p.numeroDocumento}` : ""}</span>
                     </button>
@@ -361,10 +361,10 @@ function DiaModal({ dia, actividades, prospectos, comercialNombre, onOpenComerci
               <select value={min} onChange={(e) => setMin(Number(e.target.value))} className={inputCls} aria-label="Minutos">
                 {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => <option key={m} value={m}>{String(m).padStart(2, "0")}</option>)}
               </select>
-              <div className="inline-flex shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="inline-flex shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600">
                 {(["AM", "PM"] as const).map((x) => (
                   <button key={x} type="button" onClick={() => setMer(x)}
-                    className={`px-3 py-2 text-sm font-medium transition ${mer === x ? "bg-indigo-600 text-white" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}>
+                    className={`px-3 py-2 text-sm font-medium transition ${mer === x ? "bg-indigo-600 text-white" : "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"}`}>
                     {x}
                   </button>
                 ))}
@@ -468,7 +468,7 @@ function ActivityRow({ a, comercialNombre, onOpenComercial, esAdmin, onChange }:
   const vencida = !inactiva && a.fechaProgramada != null && new Date(a.fechaProgramada) < new Date();
   const badgeCls = a.completada
     ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
-    : cancelada ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
+    : cancelada ? "bg-slate-200 dark:bg-slate-600 text-slate-400 dark:text-slate-500"
     : vencida ? "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400"
     : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400";
 
@@ -484,8 +484,8 @@ function ActivityRow({ a, comercialNombre, onOpenComercial, esAdmin, onChange }:
             <select value={h12} onChange={(e) => setH12(Number(e.target.value))} className={inputCls}>{Array.from({ length: 12 }, (_, i) => i + 1).map((h) => <option key={h} value={h}>{h}</option>)}</select>
             <span className="text-slate-400">:</span>
             <select value={min} onChange={(e) => setMin(Number(e.target.value))} className={inputCls}>{Array.from({ length: 12 }, (_, i) => i * 5).map((m) => <option key={m} value={m}>{String(m).padStart(2, "0")}</option>)}</select>
-            <div className="inline-flex shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-              {(["AM", "PM"] as const).map((x) => <button key={x} type="button" onClick={() => setMer(x)} className={`px-3 py-2 text-sm font-medium transition ${mer === x ? "bg-indigo-600 text-white" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}>{x}</button>)}
+            <div className="inline-flex shrink-0 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600">
+              {(["AM", "PM"] as const).map((x) => <button key={x} type="button" onClick={() => setMer(x)} className={`px-3 py-2 text-sm font-medium transition ${mer === x ? "bg-indigo-600 text-white" : "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"}`}>{x}</button>)}
             </div>
           </div>
         </Field>
@@ -501,7 +501,7 @@ function ActivityRow({ a, comercialNombre, onOpenComercial, esAdmin, onChange }:
   );
 
   return (
-    <li className="flex items-start gap-3 rounded-lg border border-slate-100 dark:border-slate-800 px-3 py-2.5 text-sm">
+    <li className="flex items-start gap-3 rounded-lg border border-slate-100 dark:border-slate-600 px-3 py-2.5 text-sm">
       <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${badgeCls}`} title={humaniza(a.tipo)} aria-label={humaniza(a.tipo)}>
         <TipoIcon tipo={a.tipo} />
       </div>

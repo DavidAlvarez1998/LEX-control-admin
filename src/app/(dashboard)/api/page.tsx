@@ -38,7 +38,7 @@ export default function ApiPage() {
       ) : (
         <Card className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 dark:border-slate-800 text-left text-slate-500 dark:text-slate-400">
+            <thead className="border-b border-slate-200 dark:border-slate-600 text-left text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-5 py-3 font-medium">Nombre</th>
                 <th className="px-5 py-3 font-medium">Prefijo</th>
@@ -48,7 +48,7 @@ export default function ApiPage() {
             </thead>
             <tbody>
               {keys.map((k) => (
-                <tr key={k.id} className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+                <tr key={k.id} className="border-b border-slate-100 dark:border-slate-600 last:border-0">
                   <td className="px-5 py-3 font-medium text-slate-800 dark:text-slate-100">{k.nombre}</td>
                   <td className="px-5 py-3 font-mono text-slate-600 dark:text-slate-300">{k.prefijo}…</td>
                   <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{k.creada}</td>

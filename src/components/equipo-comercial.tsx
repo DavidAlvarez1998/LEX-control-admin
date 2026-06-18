@@ -19,7 +19,7 @@ import {
 const humaniza = (s: string) => s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, " ");
 
 const ESTADO_BADGE: Record<string, string> = {
-  NUEVO: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300",
+  NUEVO: "bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300",
   CONTACTADO: "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300",
   COTIZADO: "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300",
   NEGOCIACION: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
@@ -81,7 +81,7 @@ export function EquipoComercial({ openComercialId, onForcedBack }: { openComerci
 
       <div className="mb-4">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar comercial…"
-          className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm" />
+          className="w-full max-w-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm" />
       </div>
 
       {error && (
@@ -98,10 +98,10 @@ export function EquipoComercial({ openComercialId, onForcedBack }: { openComerci
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtrados.map((c) => (
             <button key={c.id} onClick={() => setSel(c)}
-              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-left transition hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm">
+              className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 p-4 text-left transition hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{c.nombre}</p>
-                {!c.activo && <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs text-slate-500">inactivo</span>}
+                {!c.activo && <span className="rounded-full bg-slate-200 dark:bg-slate-600 px-2 py-0.5 text-xs text-slate-500">inactivo</span>}
               </div>
               <p className="truncate text-sm text-slate-500 dark:text-slate-400">{c.email}</p>
               <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">Comisión: {c.porcentajeComision == null ? "—" : `${c.porcentajeComision}%`}</p>
@@ -141,7 +141,7 @@ function ComercialDetalle({ comercial, planes, comerciales, onBack }: {
   useEffect(() => { if (tab === "prospectos") cargar(); }, [cargar, tab]);
 
   const tabCls = (t: typeof tab) =>
-    `rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${tab === t ? "bg-indigo-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`;
+    `rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${tab === t ? "bg-indigo-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"}`;
 
   return (
     <div>
@@ -176,11 +176,11 @@ function ComercialDetalle({ comercial, planes, comerciales, onBack }: {
             </Card>
           )}
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <select value={fEstado} onChange={(e) => setFEstado(e.target.value)} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-sm">
+            <select value={fEstado} onChange={(e) => setFEstado(e.target.value)} className="rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-2.5 py-1.5 text-sm">
               <option value="">Estado: todos</option>
               {ESTADO_PROSPECTO.map((s) => <option key={s} value={s}>{humaniza(s)}</option>)}
             </select>
-            <select value={fCanal} onChange={(e) => setFCanal(e.target.value)} className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-sm">
+            <select value={fCanal} onChange={(e) => setFCanal(e.target.value)} className="rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-2.5 py-1.5 text-sm">
               <option value="">Canal: todos</option>
               {CANAL_ENTRADA.map((c) => <option key={c} value={c}>{humaniza(c)}</option>)}
             </select>

@@ -48,7 +48,7 @@ const EMPTY_FORM: FormState = {
 const ESTADO_STYLES: Record<Estado, string> = {
   ACTIVO: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
   PENDIENTE: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
-  INACTIVO: "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400",
+  INACTIVO: "bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-400",
 };
 
 /** Etiqueta de acceso: el ADMIN de plataforma es aparte; dentro de una empresa
@@ -273,7 +273,7 @@ export default function UsuariosPage() {
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
           placeholder="Buscar por nombre o correo…"
-          className="mb-4 w-full max-w-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+          className="mb-4 w-full max-w-sm rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
         />
       )}
 
@@ -297,7 +297,7 @@ export default function UsuariosPage() {
       ) : (
         <Card className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 dark:border-slate-800 text-left text-slate-500 dark:text-slate-400">
+            <thead className="border-b border-slate-200 dark:border-slate-600 text-left text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-5 py-3 font-medium">Nombre</th>
                 <th className="px-5 py-3 font-medium">Empresa</th>
@@ -308,7 +308,7 @@ export default function UsuariosPage() {
             </thead>
             <tbody>
               {usuariosVisibles.map((u) => (
-                <tr key={u.id} className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+                <tr key={u.id} className="border-b border-slate-100 dark:border-slate-600 last:border-0">
                   <td className="px-5 py-3">
                     <div className="font-medium text-slate-800 dark:text-slate-100">{u.nombre}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">{u.email}</div>
@@ -369,7 +369,7 @@ export default function UsuariosPage() {
                   value={form.email}
                   disabled={!!editId}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-400 disabled:bg-slate-50 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-400 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-600 dark:disabled:text-slate-500"
                   placeholder="usuario@empresa.com"
                 />
               </label>
@@ -381,7 +381,7 @@ export default function UsuariosPage() {
                 <input
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   placeholder="Nombre y apellido"
                 />
               </label>
@@ -392,7 +392,7 @@ export default function UsuariosPage() {
                   <select
                     value={form.rol}
                     onChange={(e) => setForm({ ...form, rol: e.target.value as FormState["rol"] })}
-                    className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                    className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                   >
                     <option value="USUARIO">Usuario de empresa</option>
                     <option value="COMERCIAL">Comercial (vendedor de plataforma)</option>
@@ -410,7 +410,7 @@ export default function UsuariosPage() {
                       value={form.empresaId}
                       disabled={!!editId}
                       onChange={(e) => setForm({ ...form, empresaId: e.target.value })}
-                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-400 disabled:bg-slate-50 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-400 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-600 dark:disabled:text-slate-500"
                     >
                       <option value="">Selecciona una empresa…</option>
                       {empresas.map((e) => (
@@ -428,7 +428,7 @@ export default function UsuariosPage() {
                       onChange={(e) =>
                         setForm({ ...form, esAdminEmpresa: e.target.value === "admin" })
                       }
-                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                      className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm outline-none focus:border-indigo-400"
                     >
                       <option value="user">Usuario</option>
                       <option value="admin">Administrador (gestiona su empresa)</option>
@@ -445,7 +445,7 @@ export default function UsuariosPage() {
                     step="0.01"
                     value={form.porcentajeComision}
                     onChange={(e) => setForm({ ...form, porcentajeComision: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-400"
+                    className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-400"
                     placeholder="Ej. 10"
                   />
                   <span className="mt-1 block text-xs text-slate-400 dark:text-slate-500">Se aplica al precio de cada venta cerrada. Un monto fijo por venta puede sobreescribirlo.</span>
@@ -467,7 +467,7 @@ export default function UsuariosPage() {
             </div>
 
             {editId && (
-              <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
+              <div className="mt-4 border-t border-slate-200 dark:border-slate-600 pt-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
                   Acciones de cuenta
                 </p>
@@ -476,7 +476,7 @@ export default function UsuariosPage() {
                     type="button"
                     onClick={resetPasswordActual}
                     disabled={saving}
-                    className="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                    className="rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50"
                   >
                     Restablecer contraseña
                   </button>
@@ -516,7 +516,7 @@ export default function UsuariosPage() {
               Comparte este enlace con <strong>{link.nombre}</strong> para que defina
               su contraseña. Es de un solo uso y vence en 48 horas.
             </p>
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-3 py-2">
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-200 dark:bg-slate-600 px-3 py-2">
               <input
                 readOnly
                 value={link.url}

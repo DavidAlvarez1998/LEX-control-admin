@@ -60,7 +60,7 @@ const UNIDAD_LABEL: Record<string, string> = { DIA: "Días", MES: "Meses", AÑO:
 
 const ESTADO_STYLES: Record<Estado, string> = {
   ACTIVO: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
-  FINALIZADO: "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400",
+  FINALIZADO: "bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-400",
   SUSPENDIDO: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300",
 };
 
@@ -263,7 +263,7 @@ export function ContratosComercial() {
         <Card className="overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
+              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-600 dark:text-slate-400">
                 <th className="px-4 py-3 font-medium">Nombre</th>
                 <th className="px-4 py-3 font-medium">Cargo</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
@@ -275,7 +275,7 @@ export function ContratosComercial() {
             </thead>
             <tbody>
               {contratos.map((c) => (
-                <tr key={c.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800/60">
+                <tr key={c.id} className="border-b border-slate-100 last:border-0 dark:border-slate-600/60">
                   <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{c.nombreCompleto}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{c.cargo ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{c.tipoContrato ?? "—"}</td>
@@ -307,7 +307,7 @@ export function ContratosComercial() {
           </>
         }
       >
-        <div className="flex flex-wrap gap-1 border-b border-slate-200 pb-2 dark:border-slate-800">
+        <div className="flex flex-wrap gap-1 border-b border-slate-200 pb-2 dark:border-slate-600">
           {TABS.map((t) => {
             const disabled = t === "Documentos" && !editId;
             return (
@@ -318,7 +318,7 @@ export function ContratosComercial() {
                 onClick={() => setTab(t)}
                 title={disabled ? "Guarda el contrato primero" : undefined}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-40 ${
-                  tab === t ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  tab === t ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-600"
                 }`}
               >
                 {t}
@@ -366,7 +366,7 @@ export function ContratosComercial() {
             </Field>
             <Field label="Correo electrónico">
               {form.usuarioId ? (
-                <input value={form.email ?? ""} readOnly disabled title="Tomado del usuario vinculado" className={`${inputCls} cursor-not-allowed bg-slate-50 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400`} />
+                <input value={form.email ?? ""} readOnly disabled title="Tomado del usuario vinculado" className={`${inputCls} cursor-not-allowed bg-slate-200 text-slate-500 dark:bg-slate-600/50 dark:text-slate-400`} />
               ) : (
                 <input value={form.email ?? ""} onChange={(e) => set("email", e.target.value)} className={inputCls} />
               )}

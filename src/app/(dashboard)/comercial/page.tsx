@@ -58,7 +58,7 @@ function ComercialTabs() {
     `rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${
       tab === t
         ? "bg-indigo-600 text-white"
-        : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+        : "text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"
     }`;
 
   return (

@@ -94,7 +94,7 @@ function AdminDashboard() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="p-0 overflow-x-auto lg:col-span-2">
-          <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-800">
+          <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-600">
             <h3 className="font-medium text-slate-800 dark:text-slate-100">Empresas recientes</h3>
           </div>
           {loading ? (
@@ -113,12 +113,12 @@ function AdminDashboard() {
               </thead>
               <tbody>
                 {recientes.map((e) => (
-                  <tr key={e.id} className="border-t border-slate-100 dark:border-slate-800">
+                  <tr key={e.id} className="border-t border-slate-100 dark:border-slate-600">
                     <td className="px-5 py-2 font-medium text-slate-800 dark:text-slate-100">{e.nombre}</td>
                     <td className="px-5 py-2 text-slate-600 dark:text-slate-300">{e._count?.usuarios ?? "—"}</td>
                     <td className="px-5 py-2 text-slate-600 dark:text-slate-300">{e._count?.servicios ?? "—"}</td>
                     <td className="px-5 py-2">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${e.activo ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${e.activo ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" : "bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-400"}`}>
                         {e.activo ? "Activa" : "Inactiva"}
                       </span>
                     </td>
@@ -201,7 +201,7 @@ function ComercialDashboard() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="p-0 overflow-x-auto lg:col-span-2">
-          <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-800">
+          <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-600">
             <h3 className="font-medium text-slate-800 dark:text-slate-100">Pendientes en agenda</h3>
           </div>
           {loading ? (
@@ -221,7 +221,7 @@ function ComercialDashboard() {
                 {pendientes.map((i) => {
                   const vencida = agenda.vencidas.some((v) => v.id === i.id);
                   return (
-                    <tr key={i.id} className="border-t border-slate-100 dark:border-slate-800">
+                    <tr key={i.id} className="border-t border-slate-100 dark:border-slate-600">
                       <td className="px-5 py-2 font-medium text-slate-800 dark:text-slate-100">{i.prospecto.nombreEmpresa}</td>
                       <td className="px-5 py-2 text-slate-600 dark:text-slate-300">{i.titulo || i.tipo}</td>
                       <td className="px-5 py-2">
