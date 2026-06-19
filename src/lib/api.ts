@@ -1,10 +1,15 @@
 // Cliente HTTP mínimo para la API de LEX Control (Express, :4000).
-// La URL base sale de NEXT_PUBLIC_API_URL (ver .env.local); default localhost:4000.
+// Por defecto usa el proxy same-origin `/api` (rewrites en next.config.ts): el
+// navegador pega al mismo host del front y Next reenvía a la API del lado servidor,
+// sin requerir que el navegador alcance localhost:4000 directo (clave en SSH).
 
 import { clearSession, getToken } from "./auth";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Una URL real (producción) en NEXT_PUBLIC_API_URL se respeta; un valor heredado que
+// apunte a localhost:4000 (no alcanzable desde el navegador en remoto) se ignora a
+// favor del proxy `/api`.
+const ENV_URL = process.env.NEXT_PUBLIC_API_URL?.trim();
+const BASE_URL = ENV_URL && !/localhost:4000/.test(ENV_URL) ? ENV_URL : "/api";
 
 /** Error con el status y el cuerpo { error: { message, issues } } de la API. */
 export class ApiError extends Error {

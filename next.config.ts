@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
     // sin soporte (la app funciona, simplemente no anima).
     viewTransition: true,
   },
+  // Proxy same-origin a la API: el navegador llama a /api/* (mismo host que este
+  // front) y Next reenvía a la API del lado servidor. Así el navegador no necesita
+  // alcanzar localhost:4000 directamente (clave en SSH donde solo se forwardean
+  // 3000/3001). Destino configurable por env (API_PROXY_TARGET).
+  async rewrites() {
+    const target = process.env.API_PROXY_TARGET ?? "http://localhost:4000";
+    return [{ source: "/api/:path*", destination: `${target}/:path*` }];
+  },
 };
 
 export default nextConfig;
