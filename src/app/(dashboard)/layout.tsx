@@ -13,7 +13,7 @@ export default function DashboardLayout({
     <AuthGuard>
       <FeedbackProvider>
         <SidebarProvider>
-          <div className="flex h-screen overflow-hidden bg-slate-300 dark:bg-slate-800">
+          <div className="flex h-screen overflow-hidden bg-bg">
             <Sidebar />
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
               <Topbar />
