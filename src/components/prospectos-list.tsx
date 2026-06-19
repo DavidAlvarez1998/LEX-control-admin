@@ -50,6 +50,7 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
   const [fEstado, setFEstado] = useState("");
   const [fCanal, setFCanal] = useState("");
   const [fComercial, setFComercial] = useState("");
+  const [fSinAsignar, setFSinAsignar] = useState(false);
 
   const [crear, setCrear] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -65,11 +66,12 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
       setItems(await ventasApi.prospectos({
         estado: fEstado || undefined, canal: fCanal || undefined,
         comercialId: esAdmin && fComercial ? fComercial : undefined,
+        sinAsignar: fSinAsignar || undefined,
       }));
     } catch (err) {
       setError(errorMessage(err, "Error al cargar"));
     } finally { setLoading(false); }
-  }, [fEstado, fCanal, fComercial, esAdmin]);
+  }, [fEstado, fCanal, fComercial, fSinAsignar, esAdmin]);
 
   useEffect(() => { cargar(); }, [cargar]);
   useEffect(() => {
@@ -109,6 +111,17 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
     } finally { setSaving(false); }
   }
 
+  // Un COMERCIAL toma un prospecto sin dueño (auto-asignación).
+  async function tomar(id: string) {
+    try {
+      await ventasApi.tomarProspecto(id);
+      notify({ variant: "success", title: "Prospecto tomado", message: "Quedó asignado a ti." });
+      await cargar();
+    } catch (err) {
+      notify({ variant: "error", title: "No se pudo tomar", message: errorMessage(err, "Inténtalo de nuevo.") });
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -132,6 +145,10 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
             {comerciales.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
         )}
+        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm">
+          <input type="checkbox" checked={fSinAsignar} onChange={(e) => setFSinAsignar(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-400 dark:border-slate-500" />
+          Solo sin asignar
+        </label>
       </div>
 
       {error && (
@@ -174,7 +191,12 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
                   )}
                   <td className="px-5 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${ESTADO_BADGE[p.estado] ?? ""}`}>{humaniza(p.estado)}</span></td>
                   <td className="px-5 py-3 text-right">
-                    <button onClick={() => setDetalle(p)} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Abrir</button>
+                    <div className="flex justify-end gap-3">
+                      {!esAdmin && !p.comercialId && (
+                        <button onClick={() => tomar(p.id)} className="font-medium text-emerald-600 dark:text-emerald-400 hover:underline">Tomar</button>
+                      )}
+                      <button onClick={() => setDetalle(p)} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Abrir</button>
+                    </div>
                   </td>
                 </tr>
               ))}

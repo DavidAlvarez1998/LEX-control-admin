@@ -84,16 +84,19 @@ export type AgendaItem = Seguimiento & { prospecto: ProspectoResumen };
 export type Agenda = { desde: string; hasta: string; items: AgendaItem[]; vencidas: AgendaItem[] };
 
 export const ventasApi = {
-  prospectos: (q: { estado?: string; canal?: string; comercialId?: string } = {}) => {
+  prospectos: (q: { estado?: string; canal?: string; comercialId?: string; sinAsignar?: boolean } = {}) => {
     const qs = new URLSearchParams();
     if (q.estado) qs.set("estado", q.estado);
     if (q.canal) qs.set("canal", q.canal);
     if (q.comercialId) qs.set("comercialId", q.comercialId);
+    if (q.sinAsignar) qs.set("sinAsignar", "1");
     const s = qs.toString();
     return api.get<Prospecto[]>(`/prospectos${s ? `?${s}` : ""}`);
   },
   prospecto: (id: string) => api.get<ProspectoDetalle>(`/prospectos/${id}`),
   crearProspecto: (body: Record<string, unknown>) => api.post<Prospecto>("/prospectos", body),
+  /** Auto-asignación: un COMERCIAL toma un prospecto sin dueño. */
+  tomarProspecto: (id: string) => api.post<Prospecto>(`/prospectos/${id}/tomar`, {}),
   editarProspecto: (id: string, body: Record<string, unknown>) => api.patch<Prospecto>(`/prospectos/${id}`, body),
   ganar: (id: string, body: Record<string, unknown>) => api.post<unknown>(`/prospectos/${id}/ganar`, body),
   perder: (id: string, motivoPerdida: string) => api.post<unknown>(`/prospectos/${id}/perder`, { motivoPerdida }),
