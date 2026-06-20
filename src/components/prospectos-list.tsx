@@ -147,7 +147,7 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
         )}
         <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-3 py-2 text-sm">
           <input type="checkbox" checked={fSinAsignar} onChange={(e) => setFSinAsignar(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-400 dark:border-slate-500" />
-          Solo sin asignar
+          Sin asignar
         </label>
       </div>
 

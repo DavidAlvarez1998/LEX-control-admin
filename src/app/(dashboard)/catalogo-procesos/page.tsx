@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button, Card, PageHeader, PlusIcon } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
 import { AreasManager } from "@/components/areas-manager";
+import { CategoriasManager } from "@/components/categorias-manager";
 import { api, errorMessage } from "@/lib/api";
 
 // --- Tipos del dominio (Colombia) ---
@@ -30,12 +31,15 @@ type CampoTipo = (typeof CAMPO_TIPOS)[number];
 type Campo = { key: string; label: string; tipo: CampoTipo; requerido: boolean; opciones?: string[] };
 type Etapa = { key: string; nombre: string; orden: number; terminal?: boolean; reglas?: { camposRequeridos?: string[]; plazoDias?: number } };
 type Area = { id: string; slug: string; nombre: string; jurisdiccion: Jurisdiccion; activo: boolean };
+type Categoria = { id: string; slug: string; nombre: string; jurisdiccion: Jurisdiccion; activo: boolean; proximamente: boolean; orden: number };
 type Tipo = {
   id: string;
   nombre: string;
+  nombreVisual: string | null;
   descripcion: string | null;
   jurisdiccion: Jurisdiccion;
   esJudicial: boolean;
+  categoriaId: string | null;
   esquemaFormulario: Campo[];
   etapas: Etapa[];
   areaSlugs: string[];
@@ -99,6 +103,8 @@ export default function CatalogoProcesosPage() {
   // Áreas colapsadas (acordeón). Se siembran las vacías al cargar; el usuario alterna.
   const [colapsadas, setColapsadas] = useState<Set<string>>(new Set());
   const [gestionAreas, setGestionAreas] = useState(false);
+  const [gestionCategorias, setGestionCategorias] = useState(false);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -106,6 +112,8 @@ export default function CatalogoProcesosPage() {
   const [descripcion, setDescripcion] = useState("");
   const [jurisdiccion, setJurisdiccion] = useState<Jurisdiccion>("ORDINARIA_CIVIL");
   const [esJudicial, setEsJudicial] = useState(true);
+  const [categoriaId, setCategoriaId] = useState<string>("");
+  const [nombreVisual, setNombreVisual] = useState("");
   const [areaSlugs, setAreaSlugs] = useState<string[]>([]);
   const [campos, setCampos] = useState<CampoRow[]>([]);
   const [etapas, setEtapas] = useState<EtapaRow[]>([]);
@@ -131,11 +139,13 @@ export default function CatalogoProcesosPage() {
     setLoading(true);
     setError(null);
     try {
-      const [a, t] = await Promise.all([
+      const [a, c, t] = await Promise.all([
         api.get<Area[]>("/catalogo/areas"),
+        api.get<Categoria[]>("/catalogo/categorias?incluirInactivas=1"),
         api.get<Tipo[]>("/catalogo/tipos-proceso"),
       ]);
       setAreas(a);
+      setCategorias(c);
       setTipos(t);
       // El acordeón siempre arranca cerrado: colapsa todas las jurisdicciones.
       setColapsadas(new Set(JURISDICCIONES.map((j) => j.v)));
@@ -155,6 +165,8 @@ export default function CatalogoProcesosPage() {
     setDescripcion("");
     setJurisdiccion(jur ?? area?.jurisdiccion ?? "ORDINARIA_CIVIL");
     setEsJudicial(true);
+    setCategoriaId("");
+    setNombreVisual("");
     setAreaSlugs(area ? [area.slug] : []);
     setCampos([{ key: "", label: "", tipo: "texto", requerido: true, opciones: "" }]);
     setEtapas([{ key: "", nombre: "", terminal: false, plazoDias: "", camposRequeridos: [] }]);
@@ -171,6 +183,8 @@ export default function CatalogoProcesosPage() {
     setDescripcion(t.descripcion ?? "");
     setJurisdiccion(t.jurisdiccion);
     setEsJudicial(t.esJudicial ?? true);
+    setCategoriaId(t.categoriaId ?? "");
+    setNombreVisual(t.nombreVisual ?? "");
     setAreaSlugs(t.areaSlugs);
 
     // Snapshot CRUDO (con todo lo que el form no edita: ayuda, mostrarSi,
@@ -277,9 +291,12 @@ export default function CatalogoProcesosPage() {
 
     const payload = {
       nombre: nombre.trim(),
+      nombreVisual: nombreVisual.trim() || null,
       descripcion: descripcion.trim() || undefined,
       jurisdiccion,
       esJudicial,
+      // Categoría válida solo si pertenece a la jurisdicción elegida; si no, sin categoría.
+      categoriaId: categorias.find((c) => c.id === categoriaId && c.jurisdiccion === jurisdiccion)?.id ?? null,
       areaSlugs,
       esquemaFormulario,
       etapas: etapasOut,
@@ -391,6 +408,26 @@ export default function CatalogoProcesosPage() {
 
   // --- Agrupación por JURISDICCIÓN (6 fijas; cada tipo cae en exactamente una) ---
   const tiposPorJurisdiccion = (j: Jurisdiccion) => tipos.filter((t) => t.jurisdiccion === j);
+
+  // Subgrupos por CATEGORÍA (clase de proceso) dentro de una jurisdicción, igual que
+  // la navegación del portal cliente. Si la jurisdicción no tiene categorías → un solo
+  // grupo sin título (lista plana). Tipos sin categoría → bucket "Otros".
+  const gruposDeJur = (j: Jurisdiccion): { slug: string; titulo: string | null; proximamente: boolean; tipos: Tipo[] }[] => {
+    const lista = tiposPorJurisdiccion(j);
+    const cats = categorias.filter((c) => c.jurisdiccion === j).sort((a, b) => a.orden - b.orden);
+    if (cats.length === 0) return [{ slug: "_", titulo: null, proximamente: false, tipos: lista }];
+    const ids = new Set(cats.map((c) => c.id));
+    const grupos = cats.map((c) => ({
+      slug: c.slug,
+      titulo: c.nombre,
+      proximamente: c.proximamente,
+      tipos: lista.filter((t) => t.categoriaId === c.id),
+    }));
+    const otros = lista.filter((t) => !t.categoriaId || !ids.has(t.categoriaId));
+    if (otros.length) grupos.push({ slug: "_otros", titulo: "Otros", proximamente: false, tipos: otros });
+    // Oculta grupos vacíos salvo los "Próximamente" (teaser).
+    return grupos.filter((g) => g.tipos.length > 0 || g.proximamente);
+  };
   const toggleJur = (j: string) =>
     setColapsadas((s) => {
       const next = new Set(s);
@@ -430,6 +467,7 @@ export default function CatalogoProcesosPage() {
         subtitle="Tipos de proceso globales: formularios y etapas que usan todos los despachos."
         action={
           <div className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => setGestionCategorias(true)}>Gestionar categorías</Button>
             <Button variant="ghost" onClick={() => setGestionAreas(true)}>Gestionar áreas</Button>
             <Button onClick={() => abrirCrear()}>
               <PlusIcon /> Crear tipo
@@ -469,13 +507,29 @@ export default function CatalogoProcesosPage() {
                   </button>
                 </div>
                 {abierta && (
-                  <div className="space-y-2 border-t border-slate-100 px-4 py-3 dark:border-slate-600">
+                  <div className="space-y-3 border-t border-slate-100 px-4 py-3 dark:border-slate-600">
                     {lista.length === 0 ? (
                       <p className="text-sm text-slate-400">
                         Sin tipos en esta jurisdicción. <button onClick={() => abrirCrear(undefined, j.v)} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Crear el primero</button>.
                       </p>
                     ) : (
-                      lista.map(renderTipo)
+                      gruposDeJur(j.v).map((g) => (
+                        <div key={g.slug}>
+                          {g.titulo && (
+                            <div className="mb-1.5 flex items-center gap-2">
+                              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{g.titulo}</span>
+                              {g.proximamente && (
+                                <span className="rounded-full bg-slate-100 dark:bg-slate-700 px-2 py-0.5 text-[10px] font-medium text-slate-400">Próximamente</span>
+                              )}
+                            </div>
+                          )}
+                          {g.tipos.length === 0 ? (
+                            <p className="text-xs text-slate-400">Sin tipos en esta categoría.</p>
+                          ) : (
+                            <div className="space-y-2">{g.tipos.map(renderTipo)}</div>
+                          )}
+                        </div>
+                      ))
                     )}
                   </div>
                 )}
@@ -550,6 +604,25 @@ export default function CatalogoProcesosPage() {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Categoría (clase de proceso) y nombre visual */}
+              <div className="grid grid-cols-1 gap-3 border-t border-slate-100 dark:border-slate-600 pt-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Categoría (clase de proceso)</span>
+                  <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputCls}>
+                    <option value="">— Sin categoría —</option>
+                    {categorias.filter((c) => c.jurisdiccion === jurisdiccion).map((c) => (
+                      <option key={c.id} value={c.id}>{c.nombre}{!c.activo && " (inactiva)"}</option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-xs text-slate-400">Nivel de navegación entre jurisdicción y tipo. Gestiona el catálogo con “Gestionar categorías”.</span>
+                </label>
+                <label className="block">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Nombre visual (opcional)</span>
+                  <input value={nombreVisual} onChange={(e) => setNombreVisual(e.target.value)} className={inputCls} placeholder="Ej. Ejecutivo" />
+                  <span className="mt-1 block text-xs text-slate-400">Nombre corto a mostrar en la navegación. Si se deja vacío, se usa el nombre completo.</span>
+                </label>
               </div>
 
               {/* Campos del formulario */}
@@ -734,6 +807,10 @@ export default function CatalogoProcesosPage() {
 
       {gestionAreas && (
         <AreasManager onClose={() => setGestionAreas(false)} onChanged={cargar} />
+      )}
+
+      {gestionCategorias && (
+        <CategoriasManager onClose={() => setGestionCategorias(false)} onChanged={cargar} />
       )}
     </div>
   );

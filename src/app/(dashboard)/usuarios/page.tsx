@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Button, Card, EmptyState, PageHeader, PlusIcon } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
 import { api, errorMessage } from "@/lib/api";
@@ -19,8 +19,14 @@ type Usuario = {
   empresa: { nombre: string } | null;
   porcentajeComision: string | null;
   estado: Estado;
+  roles: string[]; // RolEmpresa asignados (ADMINISTRADOR/JURIDICO/CONTABLE/COMERCIAL)
   createdAt: string;
 };
+
+// Peso de cada rol de empresa (menor = más alto). Para ordenar dentro de la empresa.
+const ROLE_PESO: Record<string, number> = { ADMINISTRADOR: 0, JURIDICO: 1, CONTABLE: 2, COMERCIAL: 3 };
+const mejorPeso = (u: { roles: string[] }) =>
+  u.roles.length ? Math.min(...u.roles.map((r) => ROLE_PESO[r] ?? 50)) : 99;
 
 type EmpresaOption = { id: string; nombre: string };
 
@@ -44,6 +50,8 @@ const EMPTY_FORM: FormState = {
   porcentajeComision: "",
   activo: true,
 };
+
+const PLATAFORMA = "Plataforma (sin empresa)";
 
 const ESTADO_STYLES: Record<Estado, string> = {
   ACTIVO: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300",
@@ -103,16 +111,57 @@ export default function UsuariosPage() {
 
   // Filtro de texto (nombre/email), prellenado desde ?q= (búsqueda global).
   const [filtro, setFiltro] = useState("");
+  const [filtroAcceso, setFiltroAcceso] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtroEmpresa, setFiltroEmpresa] = useState("");
+  // Empresas (grupos) colapsadas en el acordeón.
+  const [colapsadas, setColapsadas] = useState<Set<string>>(new Set());
+  const toggleEmpresa = (nombre: string) =>
+    setColapsadas((s) => {
+      const next = new Set(s);
+      if (next.has(nombre)) next.delete(nombre); else next.add(nombre);
+      return next;
+    });
+
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("q");
     if (q) setFiltro(q);
   }, []);
   const usuariosVisibles = (() => {
     const t = filtro.trim().toLowerCase();
-    if (!t) return usuarios;
-    return usuarios.filter(
-      (u) => u.nombre.toLowerCase().includes(t) || u.email.toLowerCase().includes(t),
-    );
+    return usuarios.filter((u) => {
+      if (t && !(u.nombre.toLowerCase().includes(t) || u.email.toLowerCase().includes(t))) return false;
+      if (filtroAcceso && acceso(u) !== filtroAcceso) return false;
+      if (filtroEstado && u.estado !== filtroEstado) return false;
+      if (filtroEmpresa && (u.empresa?.nombre ?? PLATAFORMA) !== filtroEmpresa) return false;
+      return true;
+    });
+  })();
+
+  // Agrupa los usuarios por empresa; los de plataforma (ADMIN/COMERCIAL, sin
+  // empresa) van en un grupo aparte al final. Empresas ordenadas alfabéticamente.
+  const gruposUsuarios = (() => {
+    const grupos = new Map<string, Usuario[]>();
+    for (const u of usuariosVisibles) {
+      const key = u.empresa?.nombre ?? PLATAFORMA;
+      (grupos.get(key) ?? grupos.set(key, []).get(key)!).push(u);
+    }
+    // Orden DENTRO de cada empresa: admins primero → más roles asignados → rol más
+    // alto (peso) → nombre.
+    for (const lista of grupos.values()) {
+      lista.sort(
+        (a, b) =>
+          Number(b.esAdminEmpresa) - Number(a.esAdminEmpresa) ||
+          b.roles.length - a.roles.length ||
+          mejorPeso(a) - mejorPeso(b) ||
+          a.nombre.localeCompare(b.nombre),
+      );
+    }
+    return [...grupos.entries()].sort((a, b) => {
+      const pa = a[0] === PLATAFORMA ? 1 : 0;
+      const pb = b[0] === PLATAFORMA ? 1 : 0;
+      return pa - pb || a[0].localeCompare(b[0]);
+    });
   })();
 
   function abrirCrear() {
@@ -269,12 +318,47 @@ export default function UsuariosPage() {
       )}
 
       {!loading && usuarios.length > 0 && (
-        <input
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          placeholder="Buscar por nombre o correo…"
-          className="mb-4 w-full max-w-sm rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
-        />
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <input
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            placeholder="Buscar por nombre o correo…"
+            className="w-full max-w-sm rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+          />
+          <select
+            value={filtroEmpresa}
+            onChange={(e) => setFiltroEmpresa(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+          >
+            <option value="">Todas las empresas</option>
+            {empresas.map((e) => <option key={e.id} value={e.nombre}>{e.nombre}</option>)}
+            <option value={PLATAFORMA}>{PLATAFORMA}</option>
+          </select>
+          <select
+            value={filtroAcceso}
+            onChange={(e) => setFiltroAcceso(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+          >
+            <option value="">Todo acceso</option>
+            {["Plataforma", "Comercial", "Administrador", "Usuario"].map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+          <select
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-indigo-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
+          >
+            <option value="">Todo estado</option>
+            {(["ACTIVO", "PENDIENTE", "INACTIVO"] as Estado[]).map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          {(filtro || filtroEmpresa || filtroAcceso || filtroEstado) && (
+            <button
+              onClick={() => { setFiltro(""); setFiltroEmpresa(""); setFiltroAcceso(""); setFiltroEstado(""); }}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
       )}
 
       {loading ? (
@@ -300,48 +384,76 @@ export default function UsuariosPage() {
             <thead className="border-b border-slate-200 dark:border-slate-600 text-left text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="px-5 py-3 font-medium">Nombre</th>
-                <th className="px-5 py-3 font-medium">Empresa</th>
                 <th className="px-5 py-3 font-medium">Acceso</th>
                 <th className="px-5 py-3 font-medium">Estado</th>
                 <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody>
-              {usuariosVisibles.map((u) => (
-                <tr key={u.id} className="border-b border-slate-100 dark:border-slate-600 last:border-0">
-                  <td className="px-5 py-3">
-                    <div className="font-medium text-slate-800 dark:text-slate-100">{u.nombre}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">{u.email}</div>
-                  </td>
-                  <td className="px-5 py-3 text-slate-600 dark:text-slate-300">
-                    {u.empresa?.nombre ?? "—"}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                      {acceso(u)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${ESTADO_STYLES[u.estado]}`}
-                    >
-                      {u.estado}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-right whitespace-nowrap">
-                    {u.id === miId ? (
-                      <span className="text-xs text-slate-400 dark:text-slate-500">Tú</span>
-                    ) : (
+              {gruposUsuarios.map(([empresa, lista]) => {
+                const abierta = !colapsadas.has(empresa);
+                return (
+                <Fragment key={empresa}>
+                  <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-600 dark:bg-slate-700/40">
+                    <th colSpan={4} className="p-0 text-left">
                       <button
-                        onClick={() => abrirEditar(u)}
-                        className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
+                        onClick={() => toggleEmpresa(empresa)}
+                        className="flex w-full items-center gap-2 px-5 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300"
                       >
-                        Editar
+                        <svg className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform ${abierta ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 6 15 12 9 18" />
+                        </svg>
+                        {empresa}
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-600 dark:text-slate-300">
+                          {lista.length}
+                        </span>
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </th>
+                  </tr>
+                  {abierta && lista.map((u) => (
+                    <tr key={u.id} className="border-b border-slate-100 dark:border-slate-600 last:border-0">
+                      <td className="px-5 py-3">
+                        <div className="font-medium text-slate-800 dark:text-slate-100">{u.nombre}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{u.email}</div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                          {acceso(u)}
+                        </span>
+                        {u.roles.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {u.roles.map((r) => (
+                              <span key={r} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-slate-500 dark:bg-slate-700 dark:text-slate-300">
+                                {r.toLowerCase()}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${ESTADO_STYLES[u.estado]}`}
+                        >
+                          {u.estado}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right whitespace-nowrap">
+                        {u.id === miId ? (
+                          <span className="text-xs text-slate-400 dark:text-slate-500">Tú</span>
+                        ) : (
+                          <button
+                            onClick={() => abrirEditar(u)}
+                            className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
+                          >
+                            Editar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </Card>
