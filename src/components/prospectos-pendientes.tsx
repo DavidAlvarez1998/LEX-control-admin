@@ -1,9 +1,9 @@
 "use client";
 
-// Indicador visible de prospectos que entraron por la LANDING (canal WEB), sin
-// asignar y aún en estado NUEVO = "pendientes de contactar". Derivado de los
-// prospectos existentes (NO es un subsistema de notificaciones). Solo ADMIN/COMERCIAL.
-// Refresca al cargar, al volver a la pestaña y cada 60s.
+// Indicador visible de prospectos SIN ASIGNAR y aún en estado NUEVO = "pendientes
+// de contactar" (cualquier canal). Derivado de los prospectos existentes (NO es un
+// subsistema de notificaciones). Solo ADMIN/COMERCIAL. Refresca al cargar, al volver
+// a la pestaña y cada 60s.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -23,7 +23,7 @@ export function ProspectosPendientes() {
     let vivo = true;
     const cargar = () =>
       ventasApi
-        .prospectos({ canal: "WEB", sinAsignar: true, estado: "NUEVO" })
+        .prospectos({ sinAsignar: true, estado: "NUEVO" })
         .then((p) => { if (vivo) setCount(p.length); })
         .catch(() => {});
     cargar();
@@ -43,7 +43,7 @@ export function ProspectosPendientes() {
   return (
     <Link
       href="/prospectos?sinAsignar=1"
-      title={`${count} prospecto(s) que pidieron contacto desde la web, sin asignar`}
+      title={`${count} prospecto(s) sin asignar, pendientes de contactar`}
       className="flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
     >
       <span className="relative flex h-2 w-2">
