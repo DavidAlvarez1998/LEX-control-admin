@@ -1,12 +1,13 @@
 "use client";
 
-// Bloque de documentos de un contrato para el portal admin: lista + subida real
-// (vía la API → microservicio documental) + quitar. Espejo del componente del
-// portal cliente, pero con las primitivas del admin (inputCls/Field/Button).
+// Documentos de un contrato (portal admin): lista + subida real (vía la API →
+// microservicio documental) + quitar. Usa el uploader estándar `DocumentosUploader`
+// en modo "en vivo" (subida inmediata), con la categoría como campo `extra`.
 
 import { useState } from "react";
-import { Button, Field, inputCls, Modal } from "./ui";
-import { api, errorMessage, uploadFile } from "@/lib/api";
+import { Field, inputCls } from "./ui";
+import { api, uploadFile } from "@/lib/api";
+import { DocumentosUploader, type DocSubido } from "./documentos-uploader";
 
 export type Categoria = "PERSONAL" | "PROFESIONAL" | "CONTRACTUAL" | "FINANCIERO" | "LEGAL";
 
@@ -35,128 +36,46 @@ export function DocumentosContrato({
   contratoId,
   docs,
   onChange,
-  onError,
 }: {
   contratoId: string;
   docs: DocumentoContrato[];
   onChange: (d: DocumentoContrato[]) => void;
-  onError: (m: string | null) => void;
+  // `onError` ya no se usa (los errores se muestran inline en el uploader); se
+  // mantiene opcional por compatibilidad con los call sites existentes.
+  onError?: (m: string | null) => void;
 }) {
-  const [archivo, setArchivo] = useState<File | null>(null);
   const [categoria, setCategoria] = useState<Categoria>("PERSONAL");
-  const [nombre, setNombre] = useState("");
-  const [subiendo, setSubiendo] = useState(false);
-  const [confirmar, setConfirmar] = useState<DocumentoContrato | null>(null);
-  const [borrando, setBorrando] = useState(false);
-
-  async function subir() {
-    if (!archivo) {
-      onError("Selecciona un archivo");
-      return;
-    }
-    setSubiendo(true);
-    onError(null);
-    try {
-      const fd = new FormData();
-      fd.append("file", archivo);
-      fd.append("categoria", categoria);
-      fd.append("nombre", nombre.trim() || archivo.name);
-      if (archivo.type) fd.append("tipo", archivo.type);
-      const doc = await uploadFile<DocumentoContrato>(`/contratos/${contratoId}/documentos`, fd);
-      onChange([doc, ...docs]);
-      setArchivo(null);
-      setNombre("");
-    } catch (err) {
-      onError(errorMessage(err, "Error al subir el documento"));
-    } finally {
-      setSubiendo(false);
-    }
-  }
-
-  async function borrar() {
-    if (!confirmar) return;
-    setBorrando(true);
-    onError(null);
-    try {
-      await api.del(`/contratos/${contratoId}/documentos/${confirmar.id}`);
-      onChange(docs.filter((d) => d.id !== confirmar.id));
-      setConfirmar(null);
-    } catch (err) {
-      onError(errorMessage(err, "Error al eliminar el documento"));
-    } finally {
-      setBorrando(false);
-    }
-  }
+  const existentes: DocSubido[] = docs.map((d) => ({ id: d.id, nombre: d.nombre, url: d.url, sub: CAT_LABEL[d.categoria] }));
 
   return (
-    <div className="space-y-4">
-      {docs.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Aún no hay documentos cargados.</p>
-      ) : (
-        <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-600">
-          {docs.map((d) => (
-            <li key={d.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-              <div className="min-w-0">
-                <p className="truncate font-medium text-slate-800 dark:text-slate-100">{d.nombre}</p>
-                <span className="text-xs text-slate-500 dark:text-slate-400">{CAT_LABEL[d.categoria]}</span>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                {d.url && (
-                  <a href={d.url} target="_blank" rel="noreferrer" className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
-                    Ver
-                  </a>
-                )}
-                <button onClick={() => setConfirmar(d)} className="font-medium text-red-600 hover:text-red-500">
-                  Quitar
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div className="rounded-lg border border-dashed border-slate-300 p-3 dark:border-slate-600">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Categoría">
-            <select value={categoria} onChange={(e) => setCategoria(e.target.value as Categoria)} className={inputCls}>
-              {CATEGORIAS.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Nombre del documento">
-            <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Cédula, Contrato firmado…" className={inputCls} />
-          </Field>
-        </div>
-        <input
-          type="file"
-          onChange={(e) => setArchivo(e.target.files?.[0] ?? null)}
-          className="mt-3 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 dark:text-slate-300 dark:file:bg-indigo-500/10 dark:file:text-indigo-300"
-        />
-        <div className="mt-3">
-          <Button onClick={subir} disabled={subiendo || !archivo}>
-            {subiendo ? "Subiendo…" : "Subir documento"}
-          </Button>
-        </div>
-      </div>
-
-      <Modal
-        open={!!confirmar}
-        onClose={() => !borrando && setConfirmar(null)}
-        title="Quitar documento"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setConfirmar(null)} disabled={borrando}>Cancelar</Button>
-            <Button variant="danger" onClick={borrar} disabled={borrando}>{borrando ? "Quitando…" : "Quitar"}</Button>
-          </>
-        }
-      >
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          ¿Seguro que quieres quitar &quot;{confirmar?.nombre}&quot;? Esta acción no se puede deshacer.
-        </p>
-      </Modal>
-    </div>
+    <DocumentosUploader
+      titulo="Documentos del contrato"
+      opcional={false}
+      existentes={existentes}
+      extra={
+        <Field label="Categoría del documento">
+          <select value={categoria} onChange={(e) => setCategoria(e.target.value as Categoria)} className={inputCls}>
+            {CATEGORIAS.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+      }
+      subir={async (file) => {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("categoria", categoria);
+        fd.append("nombre", file.name);
+        if (file.type) fd.append("tipo", file.type);
+        const doc = await uploadFile<DocumentoContrato>(`/contratos/${contratoId}/documentos`, fd);
+        onChange([doc, ...docs]);
+      }}
+      quitar={async (id) => {
+        await api.del(`/contratos/${contratoId}/documentos/${id}`);
+        onChange(docs.filter((d) => d.id !== id));
+      }}
+    />
   );
 }
