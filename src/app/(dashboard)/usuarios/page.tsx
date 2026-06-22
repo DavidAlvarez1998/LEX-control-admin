@@ -85,7 +85,12 @@ export default function UsuariosPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   // Link de activación a compartir manualmente con el usuario (no hay email aún).
-  const [link, setLink] = useState<{ url: string; nombre: string } | null>(null);
+  const [link, setLink] = useState<{
+    url: string;
+    nombre: string;
+    correoEnviado: boolean;
+    email?: string;
+  } | null>(null);
 
   async function cargar() {
     setLoading(true);
@@ -215,13 +220,14 @@ export default function UsuariosPage() {
         const body = esComercial
           ? { email: form.email.trim(), nombre: form.nombre.trim(), rol: "COMERCIAL", porcentajeComision: pct }
           : { email: form.email.trim(), nombre: form.nombre.trim(), empresaId: form.empresaId, esAdminEmpresa: form.esAdminEmpresa };
-        const { user, activationUrl } = await api.post<{
+        const { user, activationUrl, correoEnviado } = await api.post<{
           user: Usuario;
           activationUrl: string;
+          correoEnviado: boolean;
         }>("/usuarios", body);
         setFormOpen(false);
         await cargar();
-        setLink({ url: activationUrl, nombre: user.nombre });
+        setLink({ url: activationUrl, nombre: user.nombre, correoEnviado, email: user.email });
       }
     } catch (err) {
       setFormError(
@@ -244,13 +250,13 @@ export default function UsuariosPage() {
     });
     if (!ok) return;
     try {
-      const { activationUrl } = await api.post<{ activationUrl: string }>(
-        `/usuarios/${editId}/reset-password`,
-        {},
-      );
+      const { activationUrl, correoEnviado } = await api.post<{
+        activationUrl: string;
+        correoEnviado: boolean;
+      }>(`/usuarios/${editId}/reset-password`, {});
       setFormOpen(false);
       await cargar();
-      setLink({ url: activationUrl, nombre });
+      setLink({ url: activationUrl, nombre, correoEnviado, email: form.email || undefined });
     } catch (err) {
       await notify({
         message: errorMessage(err, "Error al generar el enlace"),
@@ -622,12 +628,21 @@ export default function UsuariosPage() {
         <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/40 p-4">
           <Card className="w-full max-w-lg">
             <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-              Enlace de activación
+              {link.correoEnviado ? "Correo enviado" : "Enlace de activación"}
             </h3>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-              Comparte este enlace con <strong>{link.nombre}</strong> para que defina
-              su contraseña. Es de un solo uso y vence en 48 horas.
-            </p>
+            {link.correoEnviado ? (
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                ✓ Le enviamos un correo
+                {link.email ? <> a <strong>{link.email}</strong></> : null} a{" "}
+                <strong>{link.nombre}</strong> con el enlace para definir su contraseña
+                (vence en 48 horas). ¿No le llegó? También puedes compartirle este enlace:
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                ⚠ No se pudo enviar el correo a <strong>{link.nombre}</strong>. Comparte
+                este enlace para que defina su contraseña. Es de un solo uso y vence en 48 horas.
+              </p>
+            )}
             <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-200 dark:bg-slate-600 px-3 py-2">
               <input
                 readOnly
