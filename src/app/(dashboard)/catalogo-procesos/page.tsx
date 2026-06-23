@@ -25,7 +25,7 @@ const JURISDICCIONES: { v: Jurisdiccion; label: string }[] = [
   { v: "FAMILIA", label: "Familia" },
 ];
 
-const CAMPO_TIPOS = ["texto", "textoLargo", "numero", "fecha", "boolean", "select", "multiselect"] as const;
+const CAMPO_TIPOS = ["texto", "textoLargo", "numero", "moneda", "porcentaje", "fecha", "boolean", "select", "multiselect"] as const;
 type CampoTipo = (typeof CAMPO_TIPOS)[number];
 
 type Campo = { key: string; label: string; tipo: CampoTipo; requerido: boolean; opciones?: string[] };
