@@ -18,6 +18,8 @@ type Usuario = {
   empresaId: string | null;
   empresa: { nombre: string } | null;
   porcentajeComision: string | null;
+  cedula: string | null;
+  tarjetaProfesional: string | null;
   estado: Estado;
   roles: string[]; // RolEmpresa asignados (ADMINISTRADOR/JURIDICO/CONTABLE/COMERCIAL)
   createdAt: string;
@@ -39,6 +41,8 @@ type FormState = {
   esAdminEmpresa: boolean; // false = Usuario, true = Administrador de la empresa
   porcentajeComision: string; // solo COMERCIAL
   activo: boolean;
+  cedula: string; // datos del abogado para firmar escritos generados
+  tarjetaProfesional: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -49,6 +53,8 @@ const EMPTY_FORM: FormState = {
   esAdminEmpresa: false,
   porcentajeComision: "",
   activo: true,
+  cedula: "",
+  tarjetaProfesional: "",
 };
 
 const PLATAFORMA = "Plataforma (sin empresa)";
@@ -186,6 +192,8 @@ export default function UsuariosPage() {
       esAdminEmpresa: u.esAdminEmpresa,
       porcentajeComision: u.porcentajeComision != null ? String(Number(u.porcentajeComision)) : "",
       activo: u.activo,
+      cedula: u.cedula ?? "",
+      tarjetaProfesional: u.tarjetaProfesional ?? "",
     });
     setFormError(null);
     setFormOpen(true);
@@ -211,7 +219,7 @@ export default function UsuariosPage() {
         // PATCH: campos editables por el ADMIN (no email ni empresa).
         await api.patch(`/usuarios/${editId}`, esComercial
           ? { nombre: form.nombre, activo: form.activo, porcentajeComision: pct }
-          : { nombre: form.nombre, esAdminEmpresa: form.esAdminEmpresa, activo: form.activo });
+          : { nombre: form.nombre, esAdminEmpresa: form.esAdminEmpresa, activo: form.activo, cedula: form.cedula.trim(), tarjetaProfesional: form.tarjetaProfesional.trim() });
         setFormOpen(false);
         await cargar();
       } else {
@@ -219,7 +227,7 @@ export default function UsuariosPage() {
         // a una empresa; el nivel de acceso lo da `esAdminEmpresa`.
         const body = esComercial
           ? { email: form.email.trim(), nombre: form.nombre.trim(), rol: "COMERCIAL", porcentajeComision: pct }
-          : { email: form.email.trim(), nombre: form.nombre.trim(), empresaId: form.empresaId, esAdminEmpresa: form.esAdminEmpresa };
+          : { email: form.email.trim(), nombre: form.nombre.trim(), empresaId: form.empresaId, esAdminEmpresa: form.esAdminEmpresa, cedula: form.cedula.trim(), tarjetaProfesional: form.tarjetaProfesional.trim() };
         const { user, activationUrl, correoEnviado } = await api.post<{
           user: Usuario;
           activationUrl: string;
@@ -552,6 +560,29 @@ export default function UsuariosPage() {
                       <option value="admin">Administrador (gestiona su empresa)</option>
                     </select>
                   </label>
+
+                  {/* Datos del abogado para firmar escritos generados (poder, demanda…).
+                      Opcionales: salen en los documentos como C.C. y Tarjeta Profesional. */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-sm text-slate-600 dark:text-slate-300">Cédula</span>
+                      <input
+                        value={form.cedula}
+                        onChange={(e) => setForm({ ...form, cedula: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                        placeholder="C.C. del abogado"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-slate-600 dark:text-slate-300">Tarjeta profesional</span>
+                      <input
+                        value={form.tarjetaProfesional}
+                        onChange={(e) => setForm({ ...form, tarjetaProfesional: e.target.value })}
+                        className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                        placeholder="N.º de tarjeta"
+                      />
+                    </label>
+                  </div>
                 </>
               ) : (
                 <label className="block">
