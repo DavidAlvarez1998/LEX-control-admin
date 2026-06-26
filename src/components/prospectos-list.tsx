@@ -38,7 +38,11 @@ const FIELD_LABEL: Record<string, string> = {
 // Validación de email permisiva (solo si el usuario escribió algo en el campo opcional).
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenComercial?: (id: string) => void; openProspectoId?: string | null } = {}) {
+// Un prospecto "por contactar" = aún en NUEVO y sin comercial asignado. Es lo que
+// cuenta la campana del topbar; se resalta en la lista para ubicarlo de un vistazo.
+const esPorContactar = (p: Prospecto) => p.estado === "NUEVO" && !p.comercialId;
+
+export function ProspectosList({ onOpenComercial, openProspectoId, initialSinAsignar }: { onOpenComercial?: (id: string) => void; openProspectoId?: string | null; initialSinAsignar?: boolean } = {}) {
   const notify = useNotify();
   const esAdmin = getUser()?.rol === "ADMIN";
 
@@ -50,7 +54,7 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
   const [fEstado, setFEstado] = useState("");
   const [fCanal, setFCanal] = useState("");
   const [fComercial, setFComercial] = useState("");
-  const [fSinAsignar, setFSinAsignar] = useState(false);
+  const [fSinAsignar, setFSinAsignar] = useState(initialSinAsignar ?? false);
 
   const [crear, setCrear] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -87,6 +91,10 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
 
   const planNombre = useMemo(() => (id: string | null) => planes.find((p) => p.id === id)?.nombre ?? "—", [planes]);
   const comNombre = useMemo(() => (id: string | null) => comerciales.find((c) => c.id === id)?.nombre ?? (id ? "Asignado" : "—"), [comerciales]);
+
+  // Los "por contactar" se muestran primero para no perderlos entre el resto.
+  const ordenados = useMemo(() => [...items].sort((a, b) => Number(esPorContactar(b)) - Number(esPorContactar(a))), [items]);
+  const pendientes = useMemo(() => items.filter(esPorContactar).length, [items]);
 
   async function guardarNuevo() {
     setFormError(null);
@@ -151,6 +159,16 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
         </label>
       </div>
 
+      {!loading && pendientes > 0 && (
+        <p className="mb-3 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+          </span>
+          {pendientes} {pendientes === 1 ? "prospecto nuevo pendiente" : "prospectos nuevos pendientes"} de contactar — resaltados arriba.
+        </p>
+      )}
+
       {error && (
         <Card className="mb-4 border-red-200 bg-red-50 dark:bg-red-950/40 text-sm text-red-700 dark:text-red-300">
           {error} <button onClick={cargar} className="font-medium underline">reintentar</button>
@@ -176,9 +194,21 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
               </tr>
             </thead>
             <tbody>
-              {items.map((p) => (
-                <tr key={p.id} className="border-b border-slate-100 dark:border-slate-600 last:border-0">
-                  <td className="px-5 py-3 font-medium text-slate-800 dark:text-slate-100">{p.nombreEmpresa}</td>
+              {ordenados.map((p) => {
+                const nuevo = esPorContactar(p);
+                return (
+                <tr key={p.id} className={`border-b border-slate-100 dark:border-slate-600 last:border-0 ${nuevo ? "bg-amber-50/70 dark:bg-amber-500/[0.07]" : ""}`}>
+                  <td className={`px-5 py-3 font-medium text-slate-800 dark:text-slate-100 ${nuevo ? "border-l-2 border-l-amber-400" : ""}`}>
+                    <div className="flex items-center gap-2">
+                      {nuevo && (
+                        <span className="relative flex h-2 w-2 shrink-0" title="Nuevo · pendiente de contactar">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                        </span>
+                      )}
+                      {p.nombreEmpresa}
+                    </div>
+                  </td>
                   <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{p.nombreContacto}</td>
                   <td className="px-5 py-3 text-slate-500 dark:text-slate-400">{humaniza(p.canalEntrada)}</td>
                   <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{planNombre(p.planInteresId)}</td>
@@ -189,7 +219,11 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
                         : comNombre(p.comercialId)}
                     </td>
                   )}
-                  <td className="px-5 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${ESTADO_BADGE[p.estado] ?? ""}`}>{humaniza(p.estado)}</span></td>
+                  <td className="px-5 py-3">
+                    {nuevo
+                      ? <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">Nuevo · por contactar</span>
+                      : <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${ESTADO_BADGE[p.estado] ?? ""}`}>{humaniza(p.estado)}</span>}
+                  </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex justify-end gap-3">
                       {!esAdmin && !p.comercialId && (
@@ -199,7 +233,7 @@ export function ProspectosList({ onOpenComercial, openProspectoId }: { onOpenCom
                     </div>
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </Card>

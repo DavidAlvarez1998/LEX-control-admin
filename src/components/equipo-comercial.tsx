@@ -193,12 +193,22 @@ function ComercialDetalle({ comercial, planes, comerciales, onBack }: {
             <Card className="p-0">
               <ul className="divide-y divide-slate-100 dark:divide-slate-800">
                 {prospectos.map((p) => (
-                  <li key={p.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+                  <li key={p.id} className={`flex items-center gap-3 px-4 py-3 text-sm ${p.estado === "NUEVO" ? "bg-amber-50/70 dark:bg-amber-500/[0.07] border-l-2 border-l-amber-400" : ""}`}>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-slate-800 dark:text-slate-100">{p.nombreEmpresa}</p>
+                      <p className="flex items-center gap-2 font-medium text-slate-800 dark:text-slate-100">
+                        {p.estado === "NUEVO" && (
+                          <span className="relative flex h-2 w-2 shrink-0" title="Nuevo · pendiente de contactar">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                          </span>
+                        )}
+                        {p.nombreEmpresa}
+                      </p>
                       <p className="text-slate-500 dark:text-slate-400">{p.nombreContacto} · {humaniza(p.canalEntrada)}</p>
                     </div>
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${ESTADO_BADGE[p.estado] ?? ""}`}>{humaniza(p.estado)}</span>
+                    {p.estado === "NUEVO"
+                      ? <span className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">Nuevo</span>
+                      : <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${ESTADO_BADGE[p.estado] ?? ""}`}>{humaniza(p.estado)}</span>}
                     <button onClick={() => setDetalle(p)} className="shrink-0 font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Abrir</button>
                   </li>
                 ))}

@@ -38,6 +38,8 @@ function ComercialTabs() {
   const comercialFromUrl = esAdmin ? sp.get("comercial") : null;
   // Prospecto a abrir cuando se llega desde la búsqueda global (?prospectoId=).
   const prospectoFromUrl = sp.get("prospectoId");
+  // Al llegar desde la campana "por contactar" (?sinAsignar=1) se preselecciona ese filtro.
+  const sinAsignarFromUrl = sp.get("sinAsignar") === "1";
   const fromUrl = sp.get("tab") as Tab | null;
   const initial = comercialFromUrl
     ? "equipo"
@@ -68,7 +70,7 @@ function ComercialTabs() {
           <button key={t.id} onClick={() => selectTab(t.id)} className={tabCls(t.id)}>{t.label}</button>
         ))}
       </div>
-      {tab === "prospectos" && <ProspectosList onOpenComercial={esAdmin ? openComercial : undefined} openProspectoId={prospectoFromUrl} />}
+      {tab === "prospectos" && <ProspectosList onOpenComercial={esAdmin ? openComercial : undefined} openProspectoId={prospectoFromUrl} initialSinAsignar={sinAsignarFromUrl} />}
       {tab === "equipo" && esAdmin && (
         <EquipoComercial openComercialId={openComercialId} onForcedBack={forcedBack} />
       )}
