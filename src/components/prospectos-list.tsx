@@ -165,7 +165,7 @@ export function ProspectosList({ onOpenComercial, openProspectoId, initialSinAsi
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
           </span>
-          {pendientes} {pendientes === 1 ? "prospecto nuevo pendiente" : "prospectos nuevos pendientes"} de contactar — resaltados arriba.
+          {pendientes} {pendientes === 1 ? "prospecto nuevo pendiente" : "prospectos nuevos pendientes"} de contactar.
         </p>
       )}
 
