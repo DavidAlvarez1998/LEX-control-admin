@@ -241,7 +241,7 @@ export function ProspectosList({ onOpenComercial, openProspectoId, initialSinAsi
 
       {/* Crear */}
       <Modal open={crear} onClose={() => !saving && setCrear(false)} title="Nuevo prospecto"
-        footer={<><Button variant="ghost" onClick={() => setCrear(false)} disabled={saving}>Cancelar</Button><Button onClick={guardarNuevo} disabled={saving}>{saving ? "Guardando…" : "Crear"}</Button></>}>
+        footer={<><Button variant="ghost" onClick={() => setCrear(false)} disabled={saving}>Cancelar</Button><Button onClick={guardarNuevo} cargando={saving}>{saving ? "Guardando…" : "Crear"}</Button></>}>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Empresa" requerido><input value={form.nombreEmpresa} onChange={(e) => setF("nombreEmpresa", e.target.value)} className={inputCls} placeholder="Despacho…" /></Field>
           <Field label="Nombre del contacto" requerido><input value={form.nombreContacto} onChange={(e) => setF("nombreContacto", e.target.value)} className={inputCls} placeholder="Ej. Juan Pérez" /></Field>

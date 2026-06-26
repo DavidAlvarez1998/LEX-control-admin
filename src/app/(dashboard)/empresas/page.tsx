@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import {
   Button,
   Card,
+  CopiarBtn,
   EmptyState,
   MoneyInput,
   PageHeader,
   PlusIcon,
+  Skeleton,
 } from "@/components/ui";
 import { useConfirm, useNotify } from "@/components/feedback";
 import { api, errorMessage } from "@/lib/api";
@@ -349,7 +351,14 @@ export default function EmpresasPage() {
       )}
 
       {loading ? (
-        <Card className="text-sm text-slate-500 dark:text-slate-400">Cargando…</Card>
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="space-y-2">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-3 w-1/4" />
+            </Card>
+          ))}
+        </div>
       ) : empresas.length === 0 ? (
         <EmptyState
           title="Sin empresas todavía"
@@ -375,9 +384,10 @@ export default function EmpresasPage() {
                   {e.email && (
                     <div className="text-xs text-slate-500 dark:text-slate-400">{e.email}</div>
                   )}
-                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="mt-1 inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                     <span className="text-slate-400 dark:text-slate-500">RFC / NIT:</span>{" "}
                     {e.rfc ?? "—"}
+                    {e.rfc && <CopiarBtn texto={e.rfc} />}
                     <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
                     {e._count.usuarios} usuario{e._count.usuarios === 1 ? "" : "s"}
                   </div>
