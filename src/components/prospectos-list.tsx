@@ -251,7 +251,7 @@ export function ProspectosList({ onOpenComercial, openProspectoId, initialSinAsi
           <Field label="Teléfono"><input value={form.telefono} onChange={(e) => setF("telefono", e.target.value)} className={inputCls} placeholder="opcional" /></Field>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Field label="NIT / Identificación"><input value={form.numeroDocumento} onChange={(e) => setF("numeroDocumento", e.target.value)} className={inputCls} placeholder="opcional" /></Field>
+          <Field label="NIT / Identificación"><input value={form.numeroDocumento} onChange={(e) => setF("numeroDocumento", e.target.value)} className={inputCls} placeholder="Opcional · ej. 900123456-7 (NIT) o cédula" /></Field>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Canal de entrada"><select value={form.canalEntrada} onChange={(e) => setF("canalEntrada", e.target.value)} className={inputCls}>{CANAL_ENTRADA.map((c) => <option key={c} value={c}>{humaniza(c)}</option>)}</select></Field>

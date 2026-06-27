@@ -6,7 +6,7 @@
 // (empresaId null), así que aquí se gestionan justo los contratos de plataforma.
 
 import { useEffect, useState } from "react";
-import { Button, Card, EmptyState, Field, inputCls, Modal, MoneyInput, PlusIcon, StatCard } from "./ui";
+import { Button, Card, EmptyState, Field, inputCls, Modal, MoneyInput, placeholderDocumento, PlusIcon, StatCard } from "./ui";
 import { DocumentosContrato, type DocumentoContrato as Documento } from "./documentos-contrato";
 import { api, errorMessage } from "@/lib/api";
 
@@ -356,7 +356,7 @@ export function ContratosComercial() {
               </select>
             </Field>
             <Field label="Número de documento">
-              <input value={form.numeroDocumento ?? ""} onChange={(e) => set("numeroDocumento", e.target.value)} className={inputCls} />
+              <input value={form.numeroDocumento ?? ""} onChange={(e) => set("numeroDocumento", e.target.value)} className={inputCls} placeholder={placeholderDocumento(form.tipoDocumento)} />
             </Field>
             <Field label="Fecha de nacimiento">
               <input type="date" value={form.fechaNacimiento ?? ""} onChange={(e) => set("fechaNacimiento", e.target.value)} className={inputCls} />

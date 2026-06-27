@@ -335,6 +335,13 @@ export function Modal({
 export const inputCls =
   "mt-1 w-full rounded-lg border border-line bg-subtle px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted focus:border-accent";
 
+/** Placeholder de un campo "número de documento" según el tipo. El NIT lleva dígito de
+ *  verificación tras un guion (900123456-7); el resto es texto libre (pasaportes/PEP pueden
+ *  llevar letras), así que solo se sugiere "Número". */
+export function placeholderDocumento(tipoDoc?: string | null): string {
+  return tipoDoc === "NIT" ? "Ej. 900123456-7" : "Número";
+}
+
 export function Field({
   label,
   requerido = false,

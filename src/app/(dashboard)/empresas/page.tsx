@@ -499,7 +499,7 @@ export default function EmpresasPage() {
                   value={form.rfc}
                   onChange={(e) => setForm({ ...form, rfc: e.target.value })}
                   className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-600 dark:text-slate-100 px-3 py-2 text-sm outline-none focus:border-indigo-400"
-                  placeholder="Identificador fiscal"
+                  placeholder="Ej. 900123456-7 (NIT)"
                 />
               </label>
 
